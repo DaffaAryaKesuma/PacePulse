@@ -47,7 +47,7 @@ function PhaseTag({ phase }: { phase: string }) {
   };
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider border ${
+      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-sans font-bold uppercase tracking-wider border ${
         styles[phase] ?? styles.Base
       }`}
     >
@@ -295,8 +295,46 @@ export function ActivityCard({
     typeof activity.trafficFrictionScore === "number" ||
     typeof activity.easyRunDisciplineScore === "number";
 
+  // Compute 5-zone HR distribution from splits (or fallback to averageHeartrate)
+  const hrZoneStats = (() => {
+    const refMaxHr = Math.max(185, activity.maxHeartrate ?? 190);
+    const splitsWithHr = (activity.splitsJson ?? []).filter(
+      (s) => typeof s.average_heartrate === "number" && s.average_heartrate > 0
+    );
+    const counts = [0, 0, 0, 0, 0];
+    const classify = (hr: number) => {
+      const pct = hr / refMaxHr;
+      if (pct < 0.7) return 0;
+      if (pct < 0.8) return 1;
+      if (pct < 0.87) return 2;
+      if (pct < 0.94) return 3;
+      return 4;
+    };
+
+    if (splitsWithHr.length > 0) {
+      for (const s of splitsWithHr) {
+        counts[classify(s.average_heartrate!)] += 1;
+      }
+    } else if (activity.averageHeartrate && activity.averageHeartrate > 0) {
+      counts[classify(activity.averageHeartrate)] = 1;
+    } else {
+      return null;
+    }
+
+    const total = counts.reduce((a, b) => a + b, 0) || 1;
+    const dominantIdx = counts.indexOf(Math.max(...counts));
+    const labels = ["Z1 Recovery", "Z2 Aerobic", "Z3 Tempo", "Z4 Threshold", "Z5 VO2Max"];
+    const colors = ["#38BDF8", "#10B981", "#C8F902", "#FF5A1F", "#EF4444"];
+    return {
+      pcts: counts.map((c) => Math.round((c / total) * 100)),
+      dominantLabel: labels[dominantIdx],
+      dominantColor: colors[dominantIdx],
+      colors,
+    };
+  })();
+
   return (
-    <div className="relative overflow-hidden bg-[#121215] border border-[#27272A] rounded-2xl transition-all duration-300 hover:border-zinc-600 shadow-xl">
+    <div className="relative overflow-hidden bg-[#131A26] border border-[#1E293B] rounded-2xl transition-all duration-300 hover:border-[#C8F902]/40 shadow-xl">
       {/* Top Header */}
       <div className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
@@ -304,26 +342,26 @@ export function ActivityCard({
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1.5">
               <PhaseTag phase={activity.trainingPhase} />
               <span
-                className={`px-2 py-0.5 rounded text-[10px] font-mono border ${shoeTagColor}`}
+                className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${shoeTagColor}`}
               >
                 👟 {shoeName}
               </span>
-              <span className="text-[11px] sm:text-xs text-zinc-500 font-mono">
+              <span className="text-[11px] sm:text-xs text-slate-400">
                 {formatDate(activity.startDate)}
               </span>
             </div>
-            <h3 className="text-base sm:text-lg font-bold text-white font-mono wrap-break-word">
+            <h3 className="text-base sm:text-lg font-bold text-white wrap-break-word">
               {activity.name}
             </h3>
           </div>
 
           <div className="flex items-center sm:items-end justify-between sm:justify-start sm:flex-col gap-2 shrink-0">
             <div className="text-left sm:text-right">
-              <div className="text-2xl sm:text-3xl font-black font-mono text-emerald-400 tracking-tight">
+              <div className="font-display italic text-3xl sm:text-4xl font-extrabold text-[#C8F902] tracking-tight tabular-nums leading-none">
                 {distanceKm.toFixed(2)}
-                <span className="text-xs sm:text-sm font-semibold text-zinc-500 ml-1">km</span>
+                <span className="font-sans not-italic text-xs sm:text-sm font-semibold text-slate-400 ml-1">km</span>
               </div>
-              <div className="text-[11px] sm:text-xs font-mono text-zinc-500">
+              <div className="text-[11px] sm:text-xs text-slate-400 tabular-nums mt-1">
                 {t.activity.movingTime} {duration}
               </div>
             </div>
@@ -333,9 +371,9 @@ export function ActivityCard({
                 onClick={handleReanalyze}
                 disabled={reanalyzing}
                 title="Re-run sports science evaluation with latest athlete benchmarks"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white hover:border-emerald-500 text-[11px] font-mono transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#0B0F17] border border-[#1E293B] text-slate-300 hover:text-white hover:border-[#C8F902]/60 text-[11px] font-semibold transition-all disabled:opacity-50"
               >
-                <RefreshCw className={`w-3 h-3 ${reanalyzing ? "animate-spin text-emerald-400" : ""}`} />
+                <RefreshCw className={`w-3 h-3 ${reanalyzing ? "animate-spin text-[#C8F902]" : ""}`} />
                 <span>{reanalyzing ? t.activity.analyzing : t.activity.reAnalyze}</span>
               </button>
             )}
@@ -343,75 +381,105 @@ export function ActivityCard({
         </div>
 
         {/* Telemetry Metrics Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 py-3 border-y border-[#27272A]/70">
-          <div className="bg-[#18181B]/60 p-2.5 sm:p-3 rounded-xl border border-[#27272A]/60 flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 py-3 border-y border-[#1E293B]">
+          <div className="bg-[#0B0F17]/70 p-2.5 sm:p-3 rounded-xl border border-[#1E293B] flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#C8F902]/10 border border-[#C8F902]/25 flex items-center justify-center shrink-0">
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C8F902]" />
             </div>
             <div className="min-w-0">
-              <div className="text-[9px] sm:text-[10px] text-zinc-500 font-mono uppercase tracking-wider truncate">
+              <div className="text-[9px] sm:text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate">
                 {t.activity.avgPace}
               </div>
-              <div className="text-sm sm:text-base font-black font-mono text-white">
+              <div className="text-sm sm:text-base font-extrabold text-white tabular-nums">
                 {avgPace}
-                <span className="text-[11px] sm:text-xs font-normal text-zinc-500">/km</span>
+                <span className="text-[11px] sm:text-xs font-normal text-slate-400">/km</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-[#18181B]/60 p-2.5 sm:p-3 rounded-xl border border-[#27272A]/60 flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0">
-              <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-400" />
+          <div className="bg-[#0B0F17]/70 p-2.5 sm:p-3 rounded-xl border border-[#1E293B] flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#FF5A1F]/10 border border-[#FF5A1F]/25 flex items-center justify-center shrink-0">
+              <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FF5A1F]" />
             </div>
             <div className="min-w-0">
-              <div className="text-[9px] sm:text-[10px] text-zinc-500 font-mono uppercase tracking-wider truncate">
+              <div className="text-[9px] sm:text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate">
                 {t.activity.avgHr}
               </div>
-              <div className="text-sm sm:text-base font-black font-mono text-white">
+              <div className="text-sm sm:text-base font-extrabold text-white tabular-nums">
                 {activity.averageHeartrate
                   ? Math.round(activity.averageHeartrate)
                   : "—"}
-                <span className="text-[11px] sm:text-xs font-normal text-zinc-500"> bpm</span>
+                <span className="text-[11px] sm:text-xs font-normal text-slate-400"> bpm</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-[#18181B]/60 p-2.5 sm:p-3 rounded-xl border border-[#27272A]/60 flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-              <Footprints className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400" />
+          <div className="bg-[#0B0F17]/70 p-2.5 sm:p-3 rounded-xl border border-[#1E293B] flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#38BDF8]/10 border border-[#38BDF8]/25 flex items-center justify-center shrink-0">
+              <Footprints className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#38BDF8]" />
             </div>
             <div className="min-w-0">
-              <div className="text-[9px] sm:text-[10px] text-zinc-500 font-mono uppercase tracking-wider truncate">
+              <div className="text-[9px] sm:text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate">
                 {t.activity.cadence}
               </div>
-              <div className="text-sm sm:text-base font-black font-mono text-white">
+              <div className="text-sm sm:text-base font-extrabold text-white tabular-nums">
                 {cadenceSpm ?? "—"}
-                <span className="text-[11px] sm:text-xs font-normal text-zinc-500"> spm</span>
+                <span className="text-[11px] sm:text-xs font-normal text-slate-400"> spm</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-[#18181B]/60 p-2.5 sm:p-3 rounded-xl border border-[#27272A]/60 flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="bg-[#0B0F17]/70 p-2.5 sm:p-3 rounded-xl border border-[#1E293B] flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
               <Mountain className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400" />
             </div>
             <div className="min-w-0">
-              <div className="text-[9px] sm:text-[10px] text-zinc-500 font-mono uppercase tracking-wider truncate">
+              <div className="text-[9px] sm:text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate">
                 {t.activity.elevationGain}
               </div>
-              <div className="text-sm sm:text-base font-black font-mono text-white">
+              <div className="text-sm sm:text-base font-extrabold text-white tabular-nums">
                 {activity.totalElevationGain !== null
                   ? activity.totalElevationGain.toFixed(0)
                   : "—"}
-                <span className="text-[11px] sm:text-xs font-normal text-zinc-500"> m</span>
+                <span className="text-[11px] sm:text-xs font-normal text-slate-400"> m</span>
               </div>
             </div>
           </div>
         </div>
 
+        {/* 5-Zone HR Distribution Mini Bar */}
+        {hrZoneStats && (
+          <div className="mt-3 flex items-center gap-3">
+            <span
+              className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#0B0F17] border border-[#1E293B] shrink-0"
+              style={{ color: hrZoneStats.dominantColor }}
+            >
+              {hrZoneStats.dominantLabel}
+            </span>
+            <div className="flex-1 h-2 rounded-full bg-[#0B0F17] border border-[#1E293B] overflow-hidden flex gap-0.5 p-0.5">
+              {hrZoneStats.pcts.map((pct, idx) =>
+                pct > 0 ? (
+                  <div
+                    key={idx}
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: hrZoneStats.colors[idx],
+                    }}
+                    title={`Z${idx + 1}: ${pct}%`}
+                    className="h-full rounded-full transition-all duration-500"
+                  />
+                ) : null
+              )}
+            </div>
+            <span className="hidden sm:inline text-[10px] text-slate-400 tabular-nums shrink-0">
+              Z1–Z5 HR
+            </span>
+          </div>
+        )}
+
         {/* Environment, Friction & Easy-Run Discipline Badges */}
         {hasEnvBadges && (
-          <div className="mt-3 flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] font-mono">
+          <div className="mt-3 flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] font-sans">
             {typeof activity.temperatureC === "number" && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-300 border border-sky-500/20">
                 <CloudSun className="w-3 h-3 shrink-0" />
@@ -473,7 +541,7 @@ export function ActivityCard({
 
         {/* Lifestyle Quick-Tags (interactive for owner) */}
         {(canReanalyze || activeTags.length > 0) && (
-          <div className="mt-3 pt-2.5 border-t border-[#27272A]/50 flex flex-wrap items-center gap-1.5 text-[10px] sm:text-[11px] font-mono">
+          <div className="mt-3 pt-2.5 border-t border-[#27272A]/50 flex flex-wrap items-center gap-1.5 text-[10px] sm:text-[11px] font-sans">
             <span className="text-zinc-500 mr-1">{t.activity.lifestyleTitle}</span>
             {lifestyleOptions.map((opt) => {
               const selected = activeTags.includes(opt.key);
@@ -500,7 +568,7 @@ export function ActivityCard({
 
         {/* Mini Split Consistency Bar Preview (if splits exist) */}
         {activity.splitsJson && Array.isArray(activity.splitsJson) && activity.splitsJson.length > 0 && (
-          <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono text-zinc-500">
+          <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-sans text-zinc-500">
             <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] uppercase tracking-wider">
               <Zap className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> {t.activity.splitDistribution}
             </span>
@@ -535,7 +603,7 @@ export function ActivityCard({
         <>
           <button
             onClick={() => setExpanded(!expanded)}
-            className="w-full flex items-center justify-between gap-2 px-4 sm:px-6 py-3 sm:py-3.5 bg-linear-to-r from-[#18181B] via-[#151518] to-[#18181B] border-t border-[#27272A] text-xs font-mono hover:bg-zinc-800/80 transition-all duration-200 text-left"
+            className="w-full flex items-center justify-between gap-2 px-4 sm:px-6 py-3 sm:py-3.5 bg-linear-to-r from-[#18181B] via-[#151518] to-[#18181B] border-t border-[#27272A] text-xs font-sans hover:bg-zinc-800/80 transition-all duration-200 text-left"
           >
             <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
               <div className="w-6 h-6 rounded-md bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
@@ -565,19 +633,19 @@ export function ActivityCard({
               {activity.splitsJson && Array.isArray(activity.splitsJson) && activity.splitsJson.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono flex items-center gap-2">
+                    <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-sans flex items-center gap-2">
                       <Award className="w-3.5 h-3.5 text-orange-400 shrink-0" />
                       {t.activity.splitTelemetry}
                     </h4>
-                    <span className="text-[10px] text-zinc-600 font-mono">
+                    <span className="text-[10px] text-zinc-600 font-sans">
                       {t.activity.metricSplits}
                     </span>
                   </div>
 
-                  <div className="overflow-x-auto rounded-xl border border-[#27272A] bg-[#121215]">
-                    <table className="w-full text-xs font-mono whitespace-nowrap">
+                  <div className="overflow-x-auto rounded-xl border border-[#1E293B] bg-[#131A26]">
+                    <table className="w-full text-xs font-sans tabular-nums font-semibold whitespace-nowrap">
                       <thead>
-                        <tr className="border-b border-[#27272A] bg-[#18181B] text-zinc-500 text-[11px]">
+                        <tr className="border-b border-[#1E293B] bg-[#0B0F17] text-slate-400 text-[11px] font-bold">
                           <th className="text-left py-2 px-2.5 sm:px-3">{t.activity.km}</th>
                           <th className="text-left py-2 px-2.5 sm:px-3">{t.activity.pace}</th>
                           <th className="text-left py-2 px-2.5 sm:px-3">{t.activity.heartRate}</th>
@@ -595,20 +663,20 @@ export function ActivityCard({
                           return (
                             <tr
                               key={split.split}
-                              className="border-b border-[#1E1E22] hover:bg-zinc-900/60 transition-colors"
+                              className="border-b border-[#1E293B]/60 hover:bg-[#0B0F17]/60 transition-colors"
                             >
-                              <td className="py-2 px-2.5 sm:px-3 text-zinc-400 font-bold">
+                              <td className="py-2 px-2.5 sm:px-3 text-slate-300 font-semibold">
                                 #{split.split}
                               </td>
-                              <td className="py-2 px-2.5 sm:px-3 text-emerald-400 font-bold">
+                              <td className="py-2 px-2.5 sm:px-3 text-[#C8F902] font-semibold">
                                 {splitPace}/km
                               </td>
                               <td
                                 className={`py-2 px-2.5 sm:px-3 font-semibold ${
                                   split.average_heartrate &&
                                   split.average_heartrate >= 173
-                                    ? "text-orange-400"
-                                    : "text-zinc-300"
+                                    ? "text-[#FF5A1F]"
+                                    : "text-slate-200"
                                 }`}
                               >
                                 {split.average_heartrate
@@ -616,10 +684,10 @@ export function ActivityCard({
                                   : "—"}
                               </td>
                               <td
-                                className={`py-2 px-2.5 sm:px-3 ${
+                                className={`py-2 px-2.5 sm:px-3 font-semibold ${
                                   (split.elevation_difference ?? 0) > 0
-                                    ? "text-orange-400"
-                                    : "text-blue-400"
+                                    ? "text-[#FF5A1F]"
+                                    : "text-[#38BDF8]"
                                 }`}
                               >
                                 {split.elevation_difference !== undefined
@@ -638,20 +706,20 @@ export function ActivityCard({
               {/* AI Coach Detailed Feedback */}
               <div className="bg-[#121215] rounded-xl p-4 sm:p-5 border border-[#27272A]">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider font-sans flex items-center gap-2">
                     <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                     {t.activity.diagnosisTitle}
                   </h4>
-                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-sans bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
                     <Bot className="w-3 h-3" /> Gemini 3.8 Flash
                   </div>
                 </div>
                 {reanalyzeError && (
-                  <div className="mb-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono wrap-break-word">
+                  <div className="mb-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-sans wrap-break-word">
                     <strong>{t.activity.reanalyzeError}</strong> {reanalyzeError}
                   </div>
                 )}
-                <div className="text-xs text-zinc-300 leading-relaxed font-mono space-y-1 wrap-break-word">
+                <div className="text-xs text-zinc-300 leading-relaxed font-sans space-y-1 wrap-break-word">
                   {translating && (
                     <div className="text-[11px] text-emerald-400 animate-pulse mb-2">
                       {language === "id" ? "Menerjemahkan analisis ke Bahasa Indonesia..." : "Translating analysis to English..."}

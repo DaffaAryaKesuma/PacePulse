@@ -26,6 +26,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { speedToPace } from "@/lib/formatting";
 import {
   calculateAcwr,
+  calculateRaceReadiness,
   calculateVdotPredictor,
   resolveActiveTrainingPhase,
 } from "@/lib/sports-analytics";
@@ -95,14 +96,29 @@ export default function PersonalDashboard() {
     };
     window.addEventListener("pacepulse:refresh", onRefresh);
     const vdotPredictor = data ? calculateVdotPredictor(data.activities) : null;
+  const acwrMetrics = data ? calculateAcwr(data.activities) : null;
+  const longestRun30dKm = (() => {
+    if (!data?.activities?.length) return 0;
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return data.activities
+      .filter((a) => new Date(a.startDate).getTime() >= thirtyDaysAgo)
+      .reduce((max, a) => Math.max(max, a.distanceMeters / 1000), 0);
+  })();
+  const readiness =
+    currentUser && data && acwrMetrics
+      ? calculateRaceReadiness({
+          currentVdot: vdotPredictor?.vdot ?? null,
+          goalDistance: currentUser.goalDistance,
+          goalTimeSec: currentUser.goalTimeSec,
+          avgWeeklyKm28d: acwrMetrics.chronicWeeklyAvgKm,
+          longestRun30dKm,
+          acwr: acwrMetrics.ratio,
+        })
+      : null;
 
   const resolvedPhase =
-    currentUser && data
-      ? resolveActiveTrainingPhase(
-          currentUser,
-          data.activities,
-          calculateAcwr(data.activities)
-        )
+    currentUser && data && acwrMetrics
+      ? resolveActiveTrainingPhase(currentUser, data.activities, acwrMetrics)
       : null;
 
   return () => window.removeEventListener("pacepulse:refresh", onRefresh);
@@ -163,21 +179,36 @@ export default function PersonalDashboard() {
   })();
 
   const vdotPredictor = data ? calculateVdotPredictor(data.activities) : null;
+  const acwrMetrics = data ? calculateAcwr(data.activities) : null;
+  const longestRun30dKm = (() => {
+    if (!data?.activities?.length) return 0;
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return data.activities
+      .filter((a) => new Date(a.startDate).getTime() >= thirtyDaysAgo)
+      .reduce((max, a) => Math.max(max, a.distanceMeters / 1000), 0);
+  })();
+  const readiness =
+    currentUser && data && acwrMetrics
+      ? calculateRaceReadiness({
+          currentVdot: vdotPredictor?.vdot ?? null,
+          goalDistance: currentUser.goalDistance,
+          goalTimeSec: currentUser.goalTimeSec,
+          avgWeeklyKm28d: acwrMetrics.chronicWeeklyAvgKm,
+          longestRun30dKm,
+          acwr: acwrMetrics.ratio,
+        })
+      : null;
 
   const resolvedPhase =
-    currentUser && data
-      ? resolveActiveTrainingPhase(
-          currentUser,
-          data.activities,
-          calculateAcwr(data.activities)
-        )
+    currentUser && data && acwrMetrics
+      ? resolveActiveTrainingPhase(currentUser, data.activities, acwrMetrics)
       : null;
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-white selection:bg-emerald-500/30 selection:text-emerald-400">
+    <div className="min-h-screen bg-[#0B0F17] text-white selection:bg-emerald-500/30 selection:text-emerald-400">
       {/* Clean Page Topbar: Connection Status + Page Breadcrumb */}
-      <header className="border-b border-[#27272A] bg-[#0E0E12]/80 backdrop-blur-md sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-mono">
+      <header className="border-b border-[#1E293B] bg-[#0B0F17]/80 backdrop-blur-md sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-sans">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <span className="flex items-center gap-1.5 text-emerald-400 font-bold tracking-wider truncate">
               <Radio className="w-3.5 h-3.5 animate-pulse shrink-0" />
@@ -197,7 +228,7 @@ export default function PersonalDashboard() {
       <main className="max-w-6xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
         {/* Sync Toast Feedback */}
         {syncMessage && (
-          <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono flex items-center justify-between gap-3 shadow-xl">
+          <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-sans flex items-center justify-between gap-3 shadow-xl">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
               <span>{syncMessage}</span>
@@ -216,10 +247,10 @@ export default function PersonalDashboard() {
                 <Target className="w-4 h-4 text-orange-400" />
               </div>
               <div>
-                <h2 className="text-sm font-bold font-mono text-white">
+                <h2 className="text-sm font-bold font-sans text-white">
                   {t.onboarding.bannerTitle}
                 </h2>
-                <p className="text-xs font-mono text-zinc-300 mt-1">
+                <p className="text-xs font-sans text-zinc-300 mt-1">
                   {t.onboarding.bannerSubtitle}
                 </p>
               </div>
@@ -227,7 +258,7 @@ export default function PersonalDashboard() {
             <button
               type="button"
               onClick={() => window.dispatchEvent(new CustomEvent("pacepulse:open-settings"))}
-              className="px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-zinc-950 font-mono font-bold text-xs transition-all shrink-0 shadow-lg shadow-orange-500/20"
+              className="px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-zinc-950 font-sans font-bold text-xs transition-all shrink-0 shadow-lg shadow-orange-500/20"
             >
               {t.onboarding.ctaButton}
             </button>
@@ -240,13 +271,14 @@ export default function PersonalDashboard() {
           resolvedPhase={resolvedPhase}
           vdot={vdotPredictor?.vdot ?? null}
           personalBests={data?.personalBests ?? []}
+          readiness={readiness}
           isOwner={true}
         />
 
         {/* Loading state */}
         {loading && (
           <div className="flex items-center justify-center py-16">
-            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#121215] border border-[#27272A] text-zinc-400 text-xs font-mono">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#131A26] border border-[#1E293B] text-zinc-400 text-xs font-sans">
               <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
               <span>{t.dashboard.loadingTelemetry}</span>
             </div>
@@ -255,7 +287,7 @@ export default function PersonalDashboard() {
 
         {/* Error notification */}
         {error && !loading && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 flex items-start justify-between gap-3 text-xs font-mono">
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 flex items-start justify-between gap-3 text-xs font-sans">
             <div className="flex items-center gap-2 text-red-400">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
@@ -318,11 +350,11 @@ export default function PersonalDashboard() {
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-base sm:text-lg font-bold text-white font-mono uppercase tracking-wider flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-bold text-white font-sans uppercase tracking-wider flex items-center gap-2">
                     <SlidersHorizontal className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>{t.dashboard.feedTitle}</span>
                   </h2>
-                  <p className="text-xs text-zinc-500 font-mono">
+                  <p className="text-xs text-zinc-500 font-sans">
                     {t.dashboard.feedSubtitle}
                   </p>
                 </div>
@@ -330,7 +362,7 @@ export default function PersonalDashboard() {
                 {currentUser?.username && (
                   <button
                     onClick={handleCopyPublic}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#18181B] border border-[#27272A] text-zinc-400 hover:text-white text-xs font-mono self-start sm:self-auto"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B0F17] border border-[#1E293B] text-zinc-400 hover:text-white text-xs font-sans self-start sm:self-auto"
                   >
                     {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
                     <span>{copied ? t.dashboard.linkCopied : `${t.dashboard.publicProfile} (/u/${currentUser.username})`}</span>
@@ -339,22 +371,22 @@ export default function PersonalDashboard() {
               </div>
 
               {data.activities.length === 0 ? (
-                <div className="bg-[#121215] border border-[#27272A] rounded-2xl p-6 sm:p-10 text-center space-y-4">
+                <div className="bg-[#131A26] border border-[#1E293B] rounded-2xl p-6 sm:p-10 text-center space-y-4">
                   <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto">
                     <RefreshCw className="w-8 h-8 text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white font-mono">
+                    <h3 className="text-lg font-bold text-white font-sans">
                       {t.dashboard.noRunsTitle}
                     </h3>
-                    <p className="text-xs text-zinc-500 font-mono max-w-md mx-auto mt-1">
+                    <p className="text-xs text-zinc-500 font-sans max-w-md mx-auto mt-1">
                       {t.dashboard.noRunsDesc}
                     </p>
                   </div>
                   <button
                     onClick={handleUserSync}
                     disabled={syncing}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-mono font-bold text-xs transition-all shadow-lg shadow-emerald-500/20"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-sans font-bold text-xs transition-all shadow-lg shadow-emerald-500/20"
                   >
                     <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
                     <span>{syncing ? t.nav.syncing : t.dashboard.sync10Runs}</span>
@@ -376,7 +408,7 @@ export default function PersonalDashboard() {
                     <div className="pt-2 flex justify-center">
                       <Link
                         href="/dashboard/history"
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#121215] border border-[#27272A] hover:border-emerald-500/50 text-xs font-mono font-bold text-emerald-400 hover:text-emerald-300 transition-all"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#131A26] border border-[#1E293B] hover:border-emerald-500/50 text-xs font-sans font-bold text-emerald-400 hover:text-emerald-300 transition-all"
                       >
                         <span>
                           {t.dashboard.viewAllHistory} ({t.dashboard.totalSuffix} {data.activities.length})
@@ -392,7 +424,7 @@ export default function PersonalDashboard() {
         )}
 
         {/* Footer */}
-        <footer className="mt-12 sm:mt-16 pt-6 border-t border-[#27272A] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600 font-mono text-center sm:text-left">
+        <footer className="mt-12 sm:mt-16 pt-6 border-t border-[#1E293B] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600 font-sans text-center sm:text-left">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span>{t.dashboard.footerLeft}</span>

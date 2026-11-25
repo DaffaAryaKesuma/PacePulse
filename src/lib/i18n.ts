@@ -113,6 +113,9 @@ export const translations = {
       generalFitnessTitle: "GENERAL FITNESS • BASE AEROBIK",
       generalFitnessBadge: "Kebugaran & Konsistensi Aerobik",
       noGoalSet: "Belum ada target lari — Klik untuk atur target",
+      volShort: "Vol",
+      longRunShort: "Long Run",
+      readinessBreakdownHint: "Indeks Kesiapan Multi-Faktor: 60% VDOT + 25% Volume 28h + 15% Long Run & Stabilitas ACWR",
     },
     onboarding: {
       bannerTitle: "Atur Target Lari Personal Anda",
@@ -442,6 +445,9 @@ export const translations = {
       generalFitnessTitle: "GENERAL FITNESS • AEROBIC BASE",
       generalFitnessBadge: "Aerobic Base & Consistency",
       noGoalSet: "No running goal set — Click to set your target",
+      volShort: "Vol",
+      longRunShort: "Long Run",
+      readinessBreakdownHint: "Multi-Factor Readiness Index: 60% VDOT + 25% 28d Volume + 15% Long Run & ACWR Stability",
     },
     onboarding: {
       bannerTitle: "Set Your Personal Running Goal",

@@ -157,10 +157,10 @@ export function AthleteSettingsModal({
               <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-orange-400" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-bold text-white font-mono">
+              <h2 className="text-sm sm:text-base font-bold text-white font-sans">
                 {t.settings.title}
               </h2>
-              <p className="text-[11px] sm:text-xs text-zinc-500 font-mono">
+              <p className="text-[11px] sm:text-xs text-zinc-500 font-sans">
                 {t.settings.subtitle}
               </p>
             </div>
@@ -175,16 +175,16 @@ export function AthleteSettingsModal({
         </div>
 
         {/* Scrollable Form Body */}
-        <form id="athlete-settings-form" onSubmit={handleSave} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs font-mono">
+        <form id="athlete-settings-form" onSubmit={handleSave} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs font-sans">
           {error && (
-            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-sans flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {success && (
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-sans flex items-center gap-2">
               <Sparkles className="w-4 h-4 shrink-0" />
               <span>{t.settings.savedSuccess}</span>
             </div>
@@ -416,7 +416,7 @@ export function AthleteSettingsModal({
         </form>
 
         {/* Sticky Footer */}
-        <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:gap-3 p-4 sm:p-5 border-t border-[#27272A] bg-[#121215] shrink-0 text-xs font-mono">
+        <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:gap-3 p-4 sm:p-5 border-t border-[#27272A] bg-[#121215] shrink-0 text-xs font-sans">
           <button
             type="button"
             onClick={onClose}

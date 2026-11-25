@@ -73,7 +73,7 @@ export function LanguageToggle({ onChange }: { onChange?: (lang: Language) => vo
     <div
       role="group"
       aria-label="Language switcher"
-      className="inline-flex items-center rounded-lg bg-[#18181B] border border-[#27272A] p-0.5 text-[11px] font-mono font-bold shrink-0"
+      className="inline-flex items-center rounded-lg bg-[#18181B] border border-[#27272A] p-0.5 text-[11px] font-sans font-bold shrink-0"
     >
       <button
         type="button"

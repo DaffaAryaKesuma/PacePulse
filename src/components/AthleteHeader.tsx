@@ -3,7 +3,11 @@
 import { Target, Zap, ShieldCheck, Flame, Gauge, Share2, Check } from "lucide-react";
 import { useState } from "react";
 import type { AthleteInfo, PersonalBestInfo } from "@/types";
-import { predictTimeSecForDistance, type ResolvedTrainingPhase } from "@/lib/sports-analytics";
+import {
+  predictTimeSecForDistance,
+  type RaceReadinessResult,
+  type ResolvedTrainingPhase,
+} from "@/lib/sports-analytics";
 import { formatDuration } from "@/lib/formatting";
 import { useLanguage } from "@/components/LanguageProvider";
 
@@ -16,6 +20,7 @@ interface AthleteHeaderProps {
   isOwner?: boolean;
   vdot?: number | null;
   personalBests?: PersonalBestInfo[];
+  readiness?: RaceReadinessResult | null;
 }
 
 export function AthleteHeader({
@@ -26,6 +31,7 @@ export function AthleteHeader({
   athlete,
   vdot,
   personalBests,
+  readiness,
 }: AthleteHeaderProps) {
   const { language, t } = useLanguage();
   const [copied, setCopied] = useState(false);
@@ -77,10 +83,11 @@ export function AthleteHeader({
   const currentBestOrVdotSec =
     matchingPb?.timeSeconds ?? athlete?.currentPbSec ?? vdotPredictedSec ?? null;
 
-  // Dynamic readiness: target time vs current PB / VDOT estimate for that distance
+  // Dynamic readiness: prefer Multi-Factor Sports Science Readiness Index when available
   const progressPercent = (() => {
     if (isGeneralFitness) return 100;
     if (!hasRaceGoal || !goalTimeSec) return 0;
+    if (readiness) return readiness.totalReadiness;
     if (!currentBestOrVdotSec || currentBestOrVdotSec <= 0) return 50;
     if (currentBestOrVdotSec <= goalTimeSec) return 100;
     return Math.max(10, Math.min(99, Math.round((goalTimeSec / currentBestOrVdotSec) * 100)));
@@ -171,21 +178,21 @@ export function AthleteHeader({
 
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <h1 className="text-lg sm:text-2xl font-black tracking-wider text-white font-mono wrap-break-word">
+              <h1 className="font-display italic text-2xl sm:text-3xl font-extrabold tracking-wide text-white wrap-break-word">
                 {athleteName.toUpperCase()}
               </h1>
               {athlete?.username && (
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#18181B] text-zinc-400 border border-[#27272A]">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#131A26] text-slate-300 border border-[#1E293B]">
                   @{athlete.username}
                 </span>
               )}
               {isDemo && (
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-orange-500/10 text-orange-400 border border-orange-500/30 animate-pulse">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FF5A1F]/10 text-[#FF5A1F] border border-[#FF5A1F]/30 animate-pulse">
                   {t.header.demoTelemetry}
                 </span>
               )}
             </div>
-            <p className="text-[11px] sm:text-xs text-zinc-500 tracking-wider font-mono">
+            <p className="text-[11px] sm:text-xs text-slate-400 tracking-wider">
               {t.header.subtitle}
             </p>
           </div>
@@ -201,11 +208,11 @@ export function AthleteHeader({
                   : resolvedPhase.reasonEn
                 : undefined
             }
-            className={`flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full border text-[11px] sm:text-xs font-mono font-bold tracking-wider uppercase transition-all duration-300 shadow-sm ${currentTheme.bg} ${currentTheme.border} ${currentTheme.text} ${currentTheme.glow}`}
+            className={`flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full border text-[11px] sm:text-xs font-bold tracking-wider uppercase transition-all duration-300 shadow-sm ${currentTheme.bg} ${currentTheme.border} ${currentTheme.text} ${currentTheme.glow}`}
           >
             <span className={`w-2 h-2 rounded-full ${currentTheme.badge} animate-pulse shrink-0`} />
-            <span>
-              {resolvedPhase?.isAuto ? "🤖 AUTO: " : ""}
+            <span className="tabular-nums">
+              {resolvedPhase?.isAuto ? "AUTO: " : ""}
               {resolvedPhase
                 ? language === "id"
                   ? resolvedPhase.labelId
@@ -215,8 +222,8 @@ export function AthleteHeader({
             </span>
           </div>
 
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#121215] border border-[#27272A] text-xs font-mono text-zinc-400">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#131A26] border border-[#1E293B] text-xs text-slate-300 tabular-nums">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#38BDF8]" />
             <span>LT2: {thresholdHr} BPM</span>
           </div>
 
@@ -224,44 +231,56 @@ export function AthleteHeader({
             <button
               onClick={handleCopyLink}
               title="Copy link to public athlete profile"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#18181B] border border-[#27272A] text-zinc-300 hover:text-white hover:border-emerald-500 text-xs font-mono transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#131A26] border border-[#1E293B] text-slate-200 hover:text-white hover:border-[#C8F902]/60 text-xs transition-all"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5 text-zinc-400" />}
+              {copied ? <Check className="w-3.5 h-3.5 text-[#C8F902]" /> : <Share2 className="w-3.5 h-3.5 text-slate-400" />}
               <span>{copied ? t.header.linkCopied : t.header.publicLink}</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Main Cockpit Banner: Target Goal Progression */}
-      <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-[#121215] via-[#151518] to-[#121215] border border-[#27272A] p-4 sm:p-6 shadow-2xl">
-        <div className="absolute -top-16 -left-16 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Main Cockpit Banner: Target Goal Progression + Track Lanes SVG */}
+      <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-[#131A26] via-[#162030] to-[#131A26] border border-[#1E293B] p-4 sm:p-6 shadow-2xl">
+        {/* Subtle Running Track Lanes SVG */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 800 220"
+          className="absolute inset-0 w-full h-full object-cover opacity-[0.07] pointer-events-none"
+          preserveAspectRatio="none"
+        >
+          <path d="M-40 190 Q 260 60 840 130" fill="none" stroke="#C8F902" strokeWidth="1.5" />
+          <path d="M-40 205 Q 270 75 840 145" fill="none" stroke="#C8F902" strokeWidth="1.5" />
+          <path d="M-40 220 Q 280 90 840 160" fill="none" stroke="#38BDF8" strokeWidth="1.5" />
+          <path d="M-40 235 Q 290 105 840 175" fill="none" stroke="#FF5A1F" strokeWidth="1.5" strokeDasharray="8 6" />
+        </svg>
+        <div className="absolute -top-16 -left-16 w-48 h-48 bg-[#C8F902]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-[#FF5A1F]/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-center">
           {/* Target Progress Bar & Goal */}
           <div className="lg:col-span-8 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center shrink-0">
-                  <Target className="w-4 h-4 text-orange-400" />
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-[#FF5A1F]/15 border border-[#FF5A1F]/35 flex items-center justify-center shrink-0">
+                  <Target className="w-4 h-4 text-[#FF5A1F]" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[11px] sm:text-xs font-mono uppercase tracking-widest text-zinc-400">
+                  <div className="text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-slate-400">
                     {t.header.primaryMilestone}
                   </div>
-                  <div className="text-base sm:text-lg font-bold text-white font-mono flex flex-wrap items-center gap-1.5 sm:gap-2">
+                  <div className="font-display italic text-xl sm:text-2xl font-extrabold text-white flex flex-wrap items-center gap-2 tracking-wide">
                     {isGeneralFitness ? (
                       <>
                         <span>{t.header.generalFitnessTitle}</span>
-                        <span className="text-[11px] sm:text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-normal whitespace-nowrap">
+                        <span className="font-sans not-italic text-[11px] sm:text-xs px-2.5 py-0.5 rounded-full bg-[#C8F902]/10 text-[#C8F902] border border-[#C8F902]/30 font-semibold whitespace-nowrap">
                           {t.header.generalFitnessBadge}
                         </span>
                       </>
                     ) : hasRaceGoal && goalTimeSec ? (
                       <>
-                        <span>{goalDistance?.toUpperCase()} • SUB-{formatDuration(goalTimeSec)}</span>
-                        <span className="text-[11px] sm:text-xs px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 font-normal whitespace-nowrap">
+                        <span className="tabular-nums">{goalDistance?.toUpperCase()} • SUB-{formatDuration(goalTimeSec)}</span>
+                        <span className="font-sans not-italic text-[11px] sm:text-xs px-2.5 py-0.5 rounded-full bg-[#C8F902]/10 text-[#C8F902] border border-[#C8F902]/30 font-semibold whitespace-nowrap tabular-nums">
                           {t.header.paceLabel} {targetPaceStr}
                         </span>
                       </>
@@ -269,7 +288,7 @@ export function AthleteHeader({
                       <button
                         type="button"
                         onClick={() => window.dispatchEvent(new CustomEvent("pacepulse:open-settings"))}
-                        className="text-sm sm:text-base text-orange-400 hover:text-orange-300 underline underline-offset-4 transition-colors"
+                        className="font-sans not-italic text-sm sm:text-base font-bold text-[#C8F902] hover:text-[#d8ff3b] underline underline-offset-4 transition-colors"
                       >
                         {t.header.noGoalSet}
                       </button>
@@ -278,37 +297,88 @@ export function AthleteHeader({
                 </div>
               </div>
 
+              {/* GPS-Watch Style Circular Progress Ring */}
               {!isGeneralFitness && hasRaceGoal && (
-                <div className="text-left sm:text-right">
-                  <span className="text-xl sm:text-2xl font-black font-mono text-orange-400">
-                    {progressPercent}%
-                  </span>
-                  <span className="text-xs text-zinc-500 ml-1 font-mono uppercase">{t.header.readiness}</span>
+                <div
+                  className="flex flex-col items-start sm:items-end gap-1.5 shrink-0"
+                  title={t.header.readinessBreakdownHint}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="relative w-14 h-14 flex items-center justify-center">
+                      <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
+                        <defs>
+                          <linearGradient id="readinessRingGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#C8F902" />
+                            <stop offset="100%" stopColor="#FF5A1F" />
+                          </linearGradient>
+                        </defs>
+                        <circle
+                          cx="28"
+                          cy="28"
+                          r="22"
+                          fill="none"
+                          stroke="#1E293B"
+                          strokeWidth="5"
+                        />
+                        <circle
+                          cx="28"
+                          cy="28"
+                          r="22"
+                          fill="none"
+                          stroke="url(#readinessRingGrad)"
+                          strokeWidth="5"
+                          strokeLinecap="round"
+                          strokeDasharray={2 * Math.PI * 22}
+                          strokeDashoffset={
+                            2 * Math.PI * 22 * (1 - Math.min(100, Math.max(0, progressPercent)) / 100)
+                          }
+                        />
+                      </svg>
+                      <span className="absolute font-display italic text-sm font-extrabold text-[#C8F902] tabular-nums">
+                        {progressPercent}%
+                      </span>
+                    </div>
+                    <div className="text-left">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        {t.header.readiness}
+                      </div>
+                      <div className="text-[11px] font-semibold text-slate-200 tabular-nums">
+                        Sports Science
+                      </div>
+                    </div>
+                  </div>
+                  {readiness && (
+                    <div className="text-[10px] font-semibold text-slate-400 tabular-nums bg-[#0B0F17]/80 border border-[#1E293B] rounded-lg px-2 py-0.5">
+                      VDOT <span className="text-[#C8F902]">{readiness.vdotScore}%</span> •{" "}
+                      {t.header.volShort} <span className="text-[#38BDF8]">{readiness.volumeScore}%</span> •{" "}
+                      {t.header.longRunShort} <span className="text-[#FF5A1F]">{readiness.enduranceScore}%</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
             {/* Stepped Telemetry Progress Track */}
             <div className="space-y-1.5">
-              <div className="h-3 w-full bg-[#18181B] rounded-full p-0.5 border border-[#27272A] overflow-hidden relative">
+              <div className="h-2.5 w-full bg-[#0B0F17] rounded-full p-0.5 border border-[#1E293B] overflow-hidden relative">
                 <div
-                  className="h-full rounded-full bg-linear-to-r from-emerald-500 via-orange-400 to-orange-500 transition-all duration-1000 shadow-md shadow-orange-500/20"
+                  className="h-full rounded-full bg-linear-to-r from-[#38BDF8] via-[#C8F902] to-[#FF5A1F] transition-all duration-1000"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
-              <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 text-[10px] sm:text-[11px] font-mono text-zinc-500">
+              <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 text-[10px] sm:text-[11px] text-slate-400 tabular-nums">
                 <span>
                   {t.header.currentPb}{" "}
-                  <strong className="text-zinc-300 font-bold">
+                  <strong className="text-slate-200 font-bold">
                     {currentBestOrVdotSec ? formatDuration(currentBestOrVdotSec) : "—"}
                   </strong>
                 </span>
-                <span className="hidden sm:inline text-emerald-400 font-bold">
+                <span className="hidden sm:inline text-[#C8F902] font-semibold">
                   {t.header.progressModelActive}
                 </span>
                 <span>
                   {t.header.targetLabel}{" "}
-                  <strong className="text-orange-400 font-bold">
+                  <strong className="text-[#FF5A1F] font-bold">
                     {isGeneralFitness
                       ? t.header.generalFitnessBadge
                       : hasRaceGoal && goalTimeSec
@@ -320,7 +390,7 @@ export function AthleteHeader({
             </div>
 
             {/* Heart Rate Zones Reference Strip calibrated to user Max & Threshold HR */}
-            <div className="pt-2 border-t border-[#27272A]/50 flex flex-wrap items-center gap-2 text-[10px] font-mono">
+            <div className="pt-2 border-t border-[#27272A]/50 flex flex-wrap items-center gap-2 text-[10px] font-sans">
               <span className="text-zinc-500 uppercase tracking-wider flex items-center gap-1">
                 <Gauge className="w-3 h-3 text-emerald-400" /> {t.header.hrZones}
               </span>
@@ -344,7 +414,7 @@ export function AthleteHeader({
 
           {/* Right Column: Shoe Rotation telemetry */}
           <div className="lg:col-span-4 bg-[#18181B]/80 rounded-xl p-3.5 sm:p-4 border border-[#27272A] space-y-3">
-            <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
+            <div className="flex items-center justify-between text-xs font-sans text-zinc-400">
               <span className="flex items-center gap-1.5 uppercase tracking-wider">
                 <Flame className="w-3.5 h-3.5 text-orange-400" /> {t.header.shoeRotation}
               </span>
@@ -354,16 +424,16 @@ export function AthleteHeader({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
               <div className="p-2.5 rounded-lg bg-[#121215] border border-[#27272A] flex items-center justify-between gap-2">
                 <div>
-                  <div className="text-xs font-bold text-white font-mono flex items-center gap-1.5">
+                  <div className="text-xs font-bold text-white font-sans flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                     ASICS Novablast 5
                   </div>
-                  <div className="text-[10px] text-zinc-500 font-mono">
+                  <div className="text-[10px] text-zinc-500 font-sans">
                     {t.header.shoeBaseDesc}
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="text-[11px] sm:text-xs font-mono font-bold text-emerald-400">
+                  <div className="text-[11px] sm:text-xs font-sans font-bold text-emerald-400">
                     {t.header.shoeBaseTag}
                   </div>
                 </div>
@@ -371,16 +441,16 @@ export function AthleteHeader({
 
               <div className="p-2.5 rounded-lg bg-[#121215] border border-[#27272A] flex items-center justify-between gap-2">
                 <div>
-                  <div className="text-xs font-bold text-white font-mono flex items-center gap-1.5">
+                  <div className="text-xs font-bold text-white font-sans flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />
                     ASICS Magic Speed 4
                   </div>
-                  <div className="text-[10px] text-zinc-500 font-mono">
+                  <div className="text-[10px] text-zinc-500 font-sans">
                     {t.header.shoeSpeedDesc}
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="text-[11px] sm:text-xs font-mono font-bold text-orange-400">
+                  <div className="text-[11px] sm:text-xs font-sans font-bold text-orange-400">
                     {t.header.shoeSpeedTag}
                   </div>
                 </div>

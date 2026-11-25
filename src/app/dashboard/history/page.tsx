@@ -96,10 +96,10 @@ export default function RunHistoryPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-white">
+    <div className="min-h-screen bg-[#0B0F17] text-white">
       {/* Clean Page Topbar */}
-      <header className="border-b border-[#27272A] bg-[#0E0E12]/80 backdrop-blur-md sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-mono">
+      <header className="border-b border-[#1E293B] bg-[#0B0F17]/80 backdrop-blur-md sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-sans">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <span className="flex items-center gap-1.5 text-emerald-400 font-bold tracking-wider truncate">
               <Radio className="w-3.5 h-3.5 animate-pulse shrink-0" />
@@ -115,17 +115,17 @@ export default function RunHistoryPage() {
       <main className="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-6">
         {/* Page Heading */}
         <div>
-          <h1 className="text-lg sm:text-2xl font-black font-mono text-white flex items-center gap-2">
-            <History className="w-5 h-5 text-emerald-400 shrink-0" />
+          <h1 className="font-display italic text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-2 tracking-wide">
+            <History className="w-5 h-5 text-[#C8F902] shrink-0" />
             <span>{t.historyPage.title}</span>
           </h1>
-          <p className="text-xs font-mono text-zinc-500 mt-1">
+          <p className="text-xs font-sans text-zinc-500 mt-1">
             {t.historyPage.subtitle}
           </p>
         </div>
 
         {/* Search & Gear Filter Bar */}
-        <div className="flex flex-col sm:flex-row gap-3 font-mono text-xs">
+        <div className="flex flex-col sm:flex-row gap-3 font-sans text-xs">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
@@ -136,7 +136,7 @@ export default function RunHistoryPage() {
                 setCurrentPage(1);
               }}
               placeholder={t.historyPage.searchPlaceholder}
-              className="w-full bg-[#121215] border border-[#27272A] rounded-xl pl-9 pr-3.5 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50"
+              className="w-full bg-[#131A26] border border-[#1E293B] rounded-xl pl-9 pr-3.5 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50"
             />
           </div>
 
@@ -149,7 +149,7 @@ export default function RunHistoryPage() {
                 setSelectedGear(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full bg-[#121215] border border-[#27272A] rounded-xl pl-9 pr-3.5 py-2.5 text-white focus:outline-none focus:border-emerald-500/50"
+              className="w-full bg-[#131A26] border border-[#1E293B] rounded-xl pl-9 pr-3.5 py-2.5 text-white focus:outline-none focus:border-emerald-500/50"
             >
               <option value="ALL">{t.historyPage.allShoes}</option>
               {gearOptions.map((gear) => (
@@ -163,24 +163,24 @@ export default function RunHistoryPage() {
 
         {loading ? (
           <div className="py-20 flex items-center justify-center">
-            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#121215] border border-[#27272A] text-zinc-400 text-xs font-mono">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#131A26] border border-[#1E293B] text-zinc-400 text-xs font-sans">
               <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
               <span>{t.historyPage.loading}</span>
             </div>
           </div>
         ) : error ? (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono flex items-center gap-2">
+          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-sans flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         ) : filteredActivities.length === 0 ? (
-          <div className="bg-[#121215] border border-[#27272A] rounded-2xl p-10 text-center text-xs font-mono text-zinc-500">
+          <div className="bg-[#131A26] border border-[#1E293B] rounded-2xl p-10 text-center text-xs font-sans text-zinc-500">
             {t.historyPage.emptyFiltered}
           </div>
         ) : (
           <>
             {/* Count Summary */}
-            <div className="text-xs font-mono text-zinc-500">
+            <div className="text-xs font-sans text-zinc-500">
               {t.historyPage.showingCount}{" "}
               <strong className="text-zinc-200">
                 {(safePage - 1) * PAGE_SIZE + 1}–
@@ -204,7 +204,7 @@ export default function RunHistoryPage() {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="pt-4 flex items-center justify-between gap-3 font-mono text-xs border-t border-[#27272A]">
+              <div className="pt-4 flex items-center justify-between gap-3 font-sans text-xs border-t border-[#1E293B]">
                 <button
                   type="button"
                   disabled={safePage <= 1}
@@ -212,7 +212,7 @@ export default function RunHistoryPage() {
                     setCurrentPage((p) => Math.max(1, p - 1));
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#121215] border border-[#27272A] text-zinc-300 hover:text-white hover:border-zinc-500 disabled:opacity-40 transition-all"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#131A26] border border-[#1E293B] text-zinc-300 hover:text-white hover:border-zinc-500 disabled:opacity-40 transition-all"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>{t.historyPage.prev}</span>
@@ -232,7 +232,7 @@ export default function RunHistoryPage() {
                     setCurrentPage((p) => Math.min(totalPages, p + 1));
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#121215] border border-[#27272A] text-zinc-300 hover:text-white hover:border-zinc-500 disabled:opacity-40 transition-all"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#131A26] border border-[#1E293B] text-zinc-300 hover:text-white hover:border-zinc-500 disabled:opacity-40 transition-all"
                 >
                   <span>{t.historyPage.next}</span>
                   <ChevronRight className="w-4 h-4" />

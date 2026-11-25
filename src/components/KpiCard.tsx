@@ -26,25 +26,25 @@ export function KpiCard({
 }: KpiCardProps) {
   const accent = {
     emerald: {
-      icon: "text-emerald-400",
-      iconBg: "bg-emerald-500/10 border-emerald-500/30",
-      value: "text-emerald-400",
-      borderGlow: "hover:border-emerald-500/40 hover:shadow-emerald-950/30",
-      badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+      icon: "text-[#C8F902]",
+      iconBg: "bg-[#C8F902]/10 border-[#C8F902]/30",
+      value: "text-[#C8F902]",
+      borderGlow: "hover:border-[#C8F902]/45 hover:shadow-[0_10px_30px_-10px_rgba(200,249,2,0.16)]",
+      badge: "bg-[#C8F902]/10 text-[#C8F902] border-[#C8F902]/30",
     },
     orange: {
-      icon: "text-orange-400",
-      iconBg: "bg-orange-500/10 border-orange-500/30",
-      value: "text-orange-400",
-      borderGlow: "hover:border-orange-500/40 hover:shadow-orange-950/30",
-      badge: "bg-orange-500/10 text-orange-400 border-orange-500/30",
+      icon: "text-[#FF5A1F]",
+      iconBg: "bg-[#FF5A1F]/10 border-[#FF5A1F]/30",
+      value: "text-[#FF5A1F]",
+      borderGlow: "hover:border-[#FF5A1F]/45 hover:shadow-[0_10px_30px_-10px_rgba(255,90,31,0.18)]",
+      badge: "bg-[#FF5A1F]/10 text-[#FF5A1F] border-[#FF5A1F]/30",
     },
     blue: {
-      icon: "text-blue-400",
-      iconBg: "bg-blue-500/10 border-blue-500/30",
-      value: "text-blue-400",
-      borderGlow: "hover:border-blue-500/40 hover:shadow-blue-950/30",
-      badge: "bg-blue-500/10 text-blue-400 border-blue-500/30",
+      icon: "text-[#38BDF8]",
+      iconBg: "bg-[#38BDF8]/10 border-[#38BDF8]/30",
+      value: "text-[#38BDF8]",
+      borderGlow: "hover:border-[#38BDF8]/45 hover:shadow-[0_10px_30px_-10px_rgba(56,189,248,0.18)]",
+      badge: "bg-[#38BDF8]/10 text-[#38BDF8] border-[#38BDF8]/30",
     },
     purple: {
       icon: "text-purple-400",
@@ -64,17 +64,17 @@ export function KpiCard({
 
   const trendColor =
     trend === "up"
-      ? "text-emerald-400"
+      ? "text-[#C8F902]"
       : trend === "down"
         ? "text-red-400"
-        : "text-zinc-500";
+        : "text-slate-400";
 
   return (
     <div
-      className={`group relative overflow-hidden bg-[#121215] border border-[#27272A] rounded-2xl p-3.5 sm:p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl ${accent.borderGlow}`}
+      className={`group relative overflow-hidden bg-[#131A26] border border-[#1E293B] rounded-2xl p-3.5 sm:p-5 transition-all duration-300 hover:-translate-y-0.5 shadow-xl ${accent.borderGlow}`}
     >
-      {/* Subtle corner indicator */}
-      <div className="absolute top-0 right-0 w-12 h-12 bg-linear-to-bl from-white/3 to-transparent pointer-events-none" />
+      {/* Subtle athletic corner sheen */}
+      <div className="absolute top-0 right-0 w-16 h-16 bg-linear-to-bl from-[#C8F902]/6 to-transparent pointer-events-none" />
 
       <div className="flex items-start justify-between gap-2 mb-2.5 sm:mb-3">
         <div
@@ -84,7 +84,7 @@ export function KpiCard({
         </div>
         {trend && trendValue && (
           <div
-            className={`flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono font-semibold whitespace-nowrap truncate max-w-28.75 sm:max-w-none ${trendColor} bg-zinc-900 border-[#27272A]`}
+            className={`flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-semibold whitespace-nowrap truncate max-w-28.75 sm:max-w-none ${trendColor} bg-[#0B0F17] border-[#1E293B]`}
           >
             <TrendIcon className="w-3 h-3 shrink-0" />
             <span className="truncate">{trendValue}</span>
@@ -94,22 +94,22 @@ export function KpiCard({
 
       <div className="mb-1 sm:mb-1.5 flex items-baseline gap-1 min-w-0">
         <span
-          className={`text-xl sm:text-2xl lg:text-3xl font-black font-mono tracking-tight truncate ${accent.value}`}
+          className={`font-display italic text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight tabular-nums truncate ${accent.value}`}
         >
           {value}
         </span>
         {unit && (
-          <span className="text-xs sm:text-sm text-zinc-500 font-mono font-semibold shrink-0">
+          <span className="text-xs sm:text-sm text-slate-400 font-semibold shrink-0">
             {unit}
           </span>
         )}
       </div>
 
-      <p className="text-[10px] sm:text-[11px] font-mono font-bold text-zinc-400 uppercase tracking-wider mb-0.5 sm:mb-1 truncate">
+      <p className="text-[10px] sm:text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-0.5 sm:mb-1 truncate">
         {title}
       </p>
       {subtitle && (
-        <p className="text-[10px] sm:text-[11px] text-zinc-500 font-mono truncate">{subtitle}</p>
+        <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">{subtitle}</p>
       )}
     </div>
   );

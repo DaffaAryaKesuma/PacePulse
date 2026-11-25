@@ -39,7 +39,7 @@ export function EmptyState() {
               <p className="text-xs text-zinc-500 mb-2">
                 Copy <code className="text-emerald-400 bg-zinc-900 px-1 rounded">.env.example</code> to <code className="text-emerald-400 bg-zinc-900 px-1 rounded">.env.local</code> and fill in all values.
               </p>
-              <code className="block text-xs font-mono text-zinc-400 bg-zinc-950 p-2 rounded border border-[#27272A] overflow-x-auto">
+              <code className="block text-xs font-sans text-zinc-400 bg-zinc-950 p-2 rounded border border-[#27272A] overflow-x-auto">
                 cp .env.example .env.local
               </code>
             </div>
@@ -62,7 +62,7 @@ export function EmptyState() {
               <p className="text-xs text-zinc-500 mb-2">
                 After deploying to Vercel, run this command to subscribe:
               </p>
-              <code className="block text-xs font-mono text-zinc-400 bg-zinc-950 p-2 rounded border border-[#27272A] whitespace-pre-wrap break-all">
+              <code className="block text-xs font-sans text-zinc-400 bg-zinc-950 p-2 rounded border border-[#27272A] whitespace-pre-wrap break-all">
                 {`curl -X POST https://www.strava.com/api/v3/push_subscriptions \\
   -F client_id=$STRAVA_CLIENT_ID \\
   -F client_secret=$STRAVA_CLIENT_SECRET \\

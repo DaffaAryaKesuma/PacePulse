@@ -360,6 +360,97 @@ export interface ResolvedTrainingPhase {
   weeksToRace: number | null;
 }
 
+export interface RaceReadinessInput {
+  currentVdot: number | null;
+  goalDistance: string | null | undefined;
+  goalTimeSec: number | null | undefined;
+  avgWeeklyKm28d: number;
+  longestRun30dKm: number;
+  acwr: number;
+}
+
+export interface RaceReadinessResult {
+  totalReadiness: number;
+  vdotScore: number;
+  volumeScore: number;
+  enduranceScore: number;
+}
+
+/**
+ * Computes Multi-Factor Sports Science Readiness Index (0-100%):
+ * - 60% VDOT Fitness Gap (currentVdot vs targetVdot for goalDistance & goalTimeSec)
+ * - 25% 28-Day Aerobic Volume Base (avgWeeklyKm28d vs race-distance weekly standard)
+ * - 15% Long Run & ACWR Stability (longestRun30dKm vs 80% target race distance, minus ACWR > 1.35 fatigue penalty)
+ */
+export function calculateRaceReadiness({
+  currentVdot,
+  goalDistance,
+  goalTimeSec,
+  avgWeeklyKm28d,
+  longestRun30dKm,
+  acwr,
+}: RaceReadinessInput): RaceReadinessResult {
+  const raceSpecs: Record<
+    string,
+    { distMeters: number; requiredWeeklyKm: number; requiredLongRunKm: number }
+  > = {
+    "5K": { distMeters: 5000, requiredWeeklyKm: 20, requiredLongRunKm: 5 },
+    "10K": { distMeters: 10000, requiredWeeklyKm: 30, requiredLongRunKm: 9 },
+    "Half Marathon": {
+      distMeters: 21097.5,
+      requiredWeeklyKm: 40,
+      requiredLongRunKm: 17,
+    },
+    Marathon: { distMeters: 42195, requiredWeeklyKm: 55, requiredLongRunKm: 32 },
+  };
+
+  const spec = goalDistance ? raceSpecs[goalDistance] : undefined;
+  if (!spec || !goalTimeSec || goalTimeSec <= 0) {
+    return {
+      totalReadiness: 0,
+      vdotScore: 0,
+      volumeScore: 0,
+      enduranceScore: 0,
+    };
+  }
+
+  // 1. VDOT Fitness Gap (60%)
+  const targetVdot = estimateVdotFromRun(spec.distMeters, goalTimeSec);
+  const vdotScore =
+    currentVdot && currentVdot > 0 && targetVdot > 0
+      ? Math.min(100, Math.max(0, Math.round((currentVdot / targetVdot) * 100)))
+      : 0;
+
+  // 2. 28-Day Aerobic Volume Base (25%)
+  const volumeScore = Math.min(
+    100,
+    Math.max(0, Math.round((avgWeeklyKm28d / spec.requiredWeeklyKm) * 100))
+  );
+
+  // 3. Long Run & ACWR Stability (15%)
+  const rawEndurance = Math.min(
+    100,
+    Math.max(0, Math.round((longestRun30dKm / spec.requiredLongRunKm) * 100))
+  );
+  const acwrPenalty = acwr > 1.35 ? Math.min(20, Math.round((acwr - 1.35) * 40)) : 0;
+  const enduranceScore = Math.max(0, rawEndurance - acwrPenalty);
+
+  const totalReadiness = Math.min(
+    100,
+    Math.max(
+      0,
+      Math.round(vdotScore * 0.6 + volumeScore * 0.25 + enduranceScore * 0.15)
+    )
+  );
+
+  return {
+    totalReadiness,
+    vdotScore,
+    volumeScore,
+    enduranceScore,
+  };
+}
+
 export function resolveActiveTrainingPhase(
   user: {
     trainingPhase?: string | null;

@@ -1,6 +1,20 @@
 import type { Metadata } from "next";
+import { Barlow_Condensed, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/components/LanguageProvider";
+
+const barlowCondensed = Barlow_Condensed({
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  style: ["normal", "italic"],
+  variable: "--font-barlow-condensed",
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-plus-jakarta",
+});
 
 export const metadata: Metadata = {
   title: "PacePulse — AI Running Coach & Telemetry Dashboard",
@@ -15,8 +29,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="font-mono antialiased bg-[#09090B]">
+    <html
+      lang="en"
+      className={`dark ${barlowCondensed.variable} ${plusJakartaSans.variable}`}
+    >
+      <body className="font-sans antialiased bg-[#0B0F17] text-slate-100">
         <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
