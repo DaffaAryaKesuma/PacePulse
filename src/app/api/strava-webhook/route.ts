@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
-import { refreshStravaToken, fetchStravaActivity } from "@/lib/strava";
+import { getValidUserStravaToken, fetchStravaActivity } from "@/lib/strava";
 import { getGeminiFeedback } from "@/lib/gemini";
 import { sendDiscordNotification } from "@/lib/discord";
 import {
@@ -15,7 +15,7 @@ import type { StravaWebhookEvent } from "@/types";
 
 export const dynamic = "force-dynamic";
 
-// --- GET: Strava Webhook Verification ---
+// --- GET: Strava Webhook Subscription Handshake ---
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const mode = searchParams.get("hub.mode");
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
 
-// --- POST: Strava Webhook Event Handler ---
+// --- POST: Multi-User Strava Webhook Event Handler ---
 export async function POST(request: NextRequest) {
   let body: StravaWebhookEvent;
 
@@ -43,48 +43,50 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  // Respond immediately to Strava (must be < 2 seconds)
-  const responsePromise = NextResponse.json({ received: true }, { status: 200 });
+  // Acknowledge immediately (<2 seconds SLA required by Strava)
+  const response = NextResponse.json({ received: true }, { status: 200 });
 
-  // Process event asynchronously
+  // Process activity creation events asynchronously
   if (
     body.object_type === "activity" &&
     body.aspect_type === "create" &&
-    body.object_id
+    body.object_id &&
+    body.owner_id
   ) {
-    // Use waitUntil if available (Vercel Edge), otherwise fire-and-forget
-    const processingPromise = processNewActivity(body.object_id).catch(
-      (err: unknown) => {
-        console.error("[Strava Webhook] Processing error:", err);
-      }
-    );
-
-    // For Vercel serverless, attach to response lifecycle
-    if (typeof (responsePromise as unknown as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil === "function") {
-      (responsePromise as unknown as { waitUntil: (p: Promise<unknown>) => void }).waitUntil(processingPromise);
-    }
+    processMultiUserActivity(body.owner_id, body.object_id).catch((err: unknown) => {
+      console.error("[Strava Webhook] Asynchronous processing error:", err);
+    });
   }
 
-  return responsePromise;
+  return response;
 }
 
-async function processNewActivity(objectId: number): Promise<void> {
-  console.log(`[Strava Webhook] Processing activity ${objectId}`);
+async function processMultiUserActivity(ownerId: number, activityId: number): Promise<void> {
+  console.log(`[Strava Webhook] Event received for Athlete ${ownerId}, Activity ${activityId}`);
 
-  // 1. Get fresh Strava access token
-  const accessToken = await refreshStravaToken();
+  // 1. Identify User in database by Strava Athlete ID
+  const user = await prisma.user.findUnique({
+    where: { stravaAthleteId: BigInt(ownerId) },
+  });
 
-  // 2. Fetch full activity details
-  const activity = await fetchStravaActivity(objectId, accessToken);
+  if (!user) {
+    console.log(`[Strava Webhook] Athlete ${ownerId} is not registered on PacePulse. Skipping.`);
+    return;
+  }
 
-  // Filter: only process runs
+  // 2. Obtain valid Strava access token (auto-refreshes if needed)
+  const accessToken = await getValidUserStravaToken(user);
+
+  // 3. Fetch full Strava activity details
+  const activity = await fetchStravaActivity(activityId, accessToken);
+
   const activityType = activity.sport_type || activity.type;
   if (activityType !== "Run") {
     console.log(`[Strava Webhook] Skipping non-run activity: ${activityType}`);
     return;
   }
 
-  // 3. Prepare metrics for AI analysis
+  // 4. Calculate metrics
   const distanceKm = activity.distance / 1000;
   const avgPace = speedToPace(activity.average_speed);
   const cadenceSpm = cadenceToSpm(activity.average_cadence);
@@ -93,32 +95,44 @@ async function processNewActivity(objectId: number): Promise<void> {
     activity.average_speed
   );
 
-  // 4. Get Gemini AI feedback
+  // 5. Evaluate session with Gemini AI using Sports Science Knowledge Base and user's profile
   let aiFeedback = "";
   try {
-    aiFeedback = await getGeminiFeedback({
-      name: activity.name,
-      distanceKm,
-      avgPace,
-      avgHr: activity.average_heartrate ?? null,
-      maxHr: activity.max_heartrate ?? null,
-      cadenceSpm,
-      elevationGain: activity.total_elevation_gain ?? null,
-      splits: activity.splits_metric,
-    });
+    aiFeedback = await getGeminiFeedback(
+      {
+        name: activity.name,
+        distanceKm,
+        avgPace,
+        avgHr: activity.average_heartrate ?? null,
+        maxHr: activity.max_heartrate ?? null,
+        cadenceSpm,
+        elevationGain: activity.total_elevation_gain ?? null,
+        splits: activity.splits_metric,
+      },
+      {
+        fullName: user.fullName,
+        goalDistance: user.goalDistance,
+        goalTimeSec: user.goalTimeSec,
+        currentPbSec: user.currentPbSec,
+        thresholdHr: user.thresholdHr,
+        maxHr: user.maxHr,
+        thresholdPaceSec: user.thresholdPaceSec,
+        trainingPhase: user.trainingPhase || trainingPhase,
+      }
+    );
   } catch (err) {
-    console.error("[Strava Webhook] Gemini AI error:", err);
-    aiFeedback =
-      "AI analysis unavailable for this session. Check your GEMINI_API_KEY configuration.";
+    console.error("[Strava Webhook] Gemini AI coaching evaluation error:", err);
+    aiFeedback = "AI sports science analysis pending generation.";
   }
 
-  // 5. Upsert activity to database
+  // 6. Upsert Activity record tied to this User
   await prisma.activity.upsert({
     where: { stravaId: BigInt(activity.id) },
     update: {
       name: activity.name,
       aiFeedback,
-      trainingPhase,
+      trainingPhase: user.trainingPhase || trainingPhase,
+      userId: user.id,
     },
     create: {
       stravaId: BigInt(activity.id),
@@ -138,30 +152,40 @@ async function processNewActivity(objectId: number): Promise<void> {
         ? (activity.splits_metric as unknown as Prisma.InputJsonValue)
         : Prisma.JsonNull,
       aiFeedback,
-      trainingPhase,
+      trainingPhase: user.trainingPhase || trainingPhase,
+      userId: user.id,
     },
   });
 
-  console.log(`[Strava Webhook] Saved activity ${activity.id} to DB`);
+  console.log(`[Strava Webhook] Activity ${activity.id} saved for User ${user.fullName} (${user.id})`);
 
-  // 6. Send Discord notification
-  try {
-    await sendDiscordNotification({
-      activityName: activity.name,
-      distanceKm: metersToKm(activity.distance),
-      avgPace,
-      avgHr: activity.average_heartrate ?? null,
-      maxHr: activity.max_heartrate ?? null,
-      cadenceSpm,
-      elevationGain: activity.total_elevation_gain ?? null,
-      duration: formatDuration(activity.moving_time),
-      trainingPhase,
-      aiFeedback,
-      startDate: new Date(activity.start_date),
-    });
-    console.log(`[Strava Webhook] Discord notification sent`);
-  } catch (err) {
-    console.error("[Strava Webhook] Discord notification error:", err);
-    // Don't throw — notification failure shouldn't block the main flow
+  // 7. Dispatch Discord Webhook notification if user has configured one or if main athlete
+  const targetDiscordWebhook =
+    user.discordWebhookUrl ||
+    (user.stravaAthleteId === BigInt(168998449) ? process.env.DISCORD_WEBHOOK_URL : null);
+
+  if (targetDiscordWebhook) {
+    try {
+      await sendDiscordNotification(
+        {
+          athleteName: user.fullName,
+          activityName: activity.name,
+          distanceKm: metersToKm(activity.distance),
+          avgPace,
+          avgHr: activity.average_heartrate ?? null,
+          maxHr: activity.max_heartrate ?? null,
+          cadenceSpm,
+          elevationGain: activity.total_elevation_gain ?? null,
+          duration: formatDuration(activity.moving_time),
+          trainingPhase: user.trainingPhase || trainingPhase,
+          aiFeedback,
+          startDate: new Date(activity.start_date),
+        },
+        targetDiscordWebhook
+      );
+      console.log(`[Strava Webhook] Discord notification dispatched to athlete's webhook.`);
+    } catch (discordErr) {
+      console.error("[Strava Webhook] Discord dispatch error:", discordErr);
+    }
   }
 }

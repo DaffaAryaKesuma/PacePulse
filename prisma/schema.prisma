@@ -10,6 +10,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                 String     @id @default(cuid())
+  stravaAthleteId    BigInt     @unique
+  username           String?    @unique
+  fullName           String
+  avatarUrl          String?
+  stravaAccessToken  String
+  stravaRefreshToken String
+  tokenExpiresAt     Int
+  goalDistance       String     @default("Half Marathon")
+  goalTimeSec        Int        @default(6300)
+  currentPbSec       Int?
+  thresholdHr        Int?
+  maxHr              Int        @default(190)
+  thresholdPaceSec   Int?
+  trainingPhase      String     @default("Base")
+  discordWebhookUrl  String?
+  isPublic           Boolean    @default(true)
+  activities         Activity[]
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+}
+
 model Activity {
   id                 String   @id @default(cuid())
   stravaId           BigInt   @unique
@@ -28,5 +51,7 @@ model Activity {
   splitsJson         Json?
   aiFeedback         String?  @db.Text
   trainingPhase      String   @default("Base")
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt          DateTime @default(now())
 }

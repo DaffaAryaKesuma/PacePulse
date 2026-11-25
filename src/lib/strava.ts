@@ -1,4 +1,6 @@
-// Strava API utilities
+// Strava API utilities with Multi-User token management
+import { prisma } from "./prisma";
+import type { User } from "@prisma/client";
 
 interface TokenResponse {
   access_token: string;
@@ -38,7 +40,50 @@ interface SplitMetric {
 }
 
 /**
- * Exchanges Strava refresh token for a fresh access token
+ * Gets a valid Strava access token for a specific User, automatically refreshing if needed
+ */
+export async function getValidUserStravaToken(user: User): Promise<string> {
+  const nowSec = Math.floor(Date.now() / 1000);
+
+  // If token is still valid for at least 2 minutes, return it
+  if (user.tokenExpiresAt > nowSec + 120 && user.stravaAccessToken) {
+    return user.stravaAccessToken;
+  }
+
+  // Otherwise, refresh the token using user's refresh token
+  const res = await fetch("https://www.strava.com/oauth/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      client_id: process.env.STRAVA_CLIENT_ID,
+      client_secret: process.env.STRAVA_CLIENT_SECRET,
+      grant_type: "refresh_token",
+      refresh_token: user.stravaRefreshToken,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to refresh Strava token for user ${user.id}: ${res.status} ${text}`);
+  }
+
+  const data = (await res.json()) as TokenResponse;
+
+  // Persist fresh tokens to database
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      stravaAccessToken: data.access_token,
+      stravaRefreshToken: data.refresh_token,
+      tokenExpiresAt: data.expires_at,
+    },
+  });
+
+  return data.access_token;
+}
+
+/**
+ * Exchanges Strava refresh token for a fresh access token (fallback single-tenant)
  */
 export async function refreshStravaToken(): Promise<string> {
   const res = await fetch("https://www.strava.com/oauth/token", {

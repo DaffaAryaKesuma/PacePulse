@@ -36,6 +36,42 @@ export async function POST(request: NextRequest) {
 
     const results: Array<{ id: number; name: string; status: string }> = [];
 
+    // Find or initialize a default athlete user for manual admin sync
+    let targetUser = await prisma.user.findFirst({
+      orderBy: { createdAt: "asc" },
+    });
+
+    if (!targetUser) {
+      targetUser = await prisma.user.create({
+        data: {
+          stravaAthleteId: BigInt("168998449"),
+          username: "athlete",
+          fullName: "Featured Athlete",
+          stravaAccessToken: accessToken,
+          stravaRefreshToken: process.env.STRAVA_REFRESH_TOKEN || "fallback",
+          tokenExpiresAt: Math.floor(Date.now() / 1000) + 21600,
+          goalDistance: "Half Marathon",
+          goalTimeSec: 6300,
+          currentPbSec: 7448,
+          thresholdHr: 173,
+          maxHr: 190,
+          thresholdPaceSec: 280,
+          trainingPhase: "Base",
+          isPublic: true,
+        },
+      });
+    }
+
+    const athleteProfile = {
+      goalDistance: targetUser.goalDistance,
+      goalTimeSec: targetUser.goalTimeSec,
+      currentPbSec: targetUser.currentPbSec,
+      thresholdHr: targetUser.thresholdHr,
+      maxHr: targetUser.maxHr,
+      thresholdPaceSec: targetUser.thresholdPaceSec,
+      trainingPhase: targetUser.trainingPhase,
+    };
+
     // 3. Process each run
     for (const runSummary of runs) {
       try {
@@ -48,7 +84,7 @@ export async function POST(request: NextRequest) {
         const distanceKm = activity.distance / 1000;
         const avgPace = speedToPace(activity.average_speed);
         const cadenceSpm = cadenceToSpm(activity.average_cadence);
-        const trainingPhase = determineTrainingPhase(
+        const trainingPhase = targetUser.trainingPhase || determineTrainingPhase(
           activity.average_heartrate,
           activity.average_speed
         );
@@ -65,7 +101,7 @@ export async function POST(request: NextRequest) {
             cadenceSpm,
             elevationGain: activity.total_elevation_gain ?? null,
             splits: activity.splits_metric,
-          });
+          }, athleteProfile);
         } catch (aiErr) {
           console.error(`[Sync] Gemini error for activity ${activity.id}:`, aiErr);
           aiFeedback = "AI analysis pending — rate limit or configuration issue.";
@@ -78,8 +114,10 @@ export async function POST(request: NextRequest) {
             name: activity.name,
             aiFeedback,
             trainingPhase,
+            userId: targetUser.id,
           },
           create: {
+            userId: targetUser.id,
             stravaId: BigInt(activity.id),
             name: activity.name,
             type: activity.sport_type || activity.type,

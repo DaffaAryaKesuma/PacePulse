@@ -8,11 +8,12 @@ import {
   Footprints,
   Mountain,
   Clock,
-  MapPin,
   Bot,
   Zap,
   Sparkles,
   Award,
+  RefreshCw,
+  BookOpen,
 } from "lucide-react";
 import type { ActivityData } from "@/types";
 import {
@@ -25,6 +26,7 @@ import {
 
 interface ActivityCardProps {
   activity: ActivityData;
+  canReanalyze?: boolean;
 }
 
 function PhaseTag({ phase }: { phase: string }) {
@@ -32,6 +34,7 @@ function PhaseTag({ phase }: { phase: string }) {
     Recovery: "bg-blue-500/10 text-blue-400 border-blue-500/30",
     Base: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
     Build: "bg-orange-500/10 text-orange-400 border-orange-500/30",
+    Peak: "bg-red-500/10 text-red-400 border-red-500/30",
     Race: "bg-red-500/10 text-red-400 border-red-500/30",
   };
   return (
@@ -46,23 +49,47 @@ function PhaseTag({ phase }: { phase: string }) {
   );
 }
 
-export function ActivityCard({ activity }: ActivityCardProps) {
+export function ActivityCard({ activity, canReanalyze }: ActivityCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [feedback, setFeedback] = useState(activity.aiFeedback);
+  const [reanalyzing, setReanalyzing] = useState(false);
 
   const distanceKm = parseFloat(metersToKm(activity.distanceMeters));
   const avgPace = speedToPace(activity.averageSpeed);
   const cadenceSpm = cadenceToSpm(activity.averageCadence);
   const duration = formatDuration(activity.movingTimeSec);
 
-  // Determine shoe used based on pace / training phase
   const isSpeedSession =
     activity.trainingPhase === "Build" ||
+    activity.trainingPhase === "Peak" ||
     activity.trainingPhase === "Race" ||
-    (activity.averageSpeed > 0 && 1000 / activity.averageSpeed < 290); // faster than 4:50/km
+    (activity.averageSpeed > 0 && 1000 / activity.averageSpeed < 290); // < 4:50/km
   const shoeName = isSpeedSession ? "Magic Speed 4" : "Novablast 5";
   const shoeTagColor = isSpeedSession
     ? "bg-orange-500/10 text-orange-400 border-orange-500/20"
     : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+
+  const handleReanalyze = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (reanalyzing) return;
+    setReanalyzing(true);
+
+    try {
+      const res = await fetch(`/api/activities/${activity.id}/reanalyze`, {
+        method: "POST",
+      });
+
+      const data = (await res.json()) as { aiFeedback?: string; error?: string };
+      if (res.ok && data.aiFeedback) {
+        setFeedback(data.aiFeedback);
+        setExpanded(true);
+      }
+    } catch (err) {
+      console.error("Re-analyze error:", err);
+    } finally {
+      setReanalyzing(false);
+    }
+  };
 
   return (
     <div className="relative overflow-hidden bg-[#121215] border border-[#27272A] rounded-2xl transition-all duration-300 hover:border-zinc-600 shadow-xl">
@@ -86,14 +113,28 @@ export function ActivityCard({ activity }: ActivityCardProps) {
             </h3>
           </div>
 
-          <div className="text-left sm:text-right">
-            <div className="text-3xl font-black font-mono text-emerald-400 tracking-tight">
-              {distanceKm.toFixed(2)}
-              <span className="text-sm font-semibold text-zinc-500 ml-1">km</span>
+          <div className="flex items-start sm:items-end justify-between sm:justify-start sm:flex-col gap-2">
+            <div className="text-left sm:text-right">
+              <div className="text-3xl font-black font-mono text-emerald-400 tracking-tight">
+                {distanceKm.toFixed(2)}
+                <span className="text-sm font-semibold text-zinc-500 ml-1">km</span>
+              </div>
+              <div className="text-xs font-mono text-zinc-500">
+                Moving Time: {duration}
+              </div>
             </div>
-            <div className="text-xs font-mono text-zinc-500">
-              Moving Time: {duration}
-            </div>
+
+            {canReanalyze && (
+              <button
+                onClick={handleReanalyze}
+                disabled={reanalyzing}
+                title="Re-run sports science evaluation with latest athlete benchmarks"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white hover:border-emerald-500 text-[11px] font-mono transition-all disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3 h-3 ${reanalyzing ? "animate-spin text-emerald-400" : ""}`} />
+                <span>{reanalyzing ? "Analyzing..." : "Re-Analyze"}</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -174,7 +215,7 @@ export function ActivityCard({ activity }: ActivityCardProps) {
               {(activity.splitsJson as Array<{ split: number; average_speed: number }>).slice(0, 16).map((s) => {
                 const paceSec = 1000 / s.average_speed;
                 const isFast = paceSec < 280; // sub-4:40
-                const isMid = paceSec >= 280 && paceSec < 330; // 4:40 - 5:30
+                const isMid = paceSec >= 280 && paceSec < 330;
                 const barColor = isFast
                   ? "bg-orange-400"
                   : isMid
@@ -197,7 +238,7 @@ export function ActivityCard({ activity }: ActivityCardProps) {
       </div>
 
       {/* AI Feedback Accordion Toggle */}
-      {activity.aiFeedback && (
+      {feedback && (
         <>
           <button
             onClick={() => setExpanded(!expanded)}
@@ -207,14 +248,15 @@ export function ActivityCard({ activity }: ActivityCardProps) {
               <div className="w-6 h-6 rounded-md bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center">
                 <Bot className="w-3.5 h-3.5 text-emerald-400" />
               </div>
-              <span className="font-bold uppercase tracking-wider text-emerald-400">
-                Gemini 2.5 Flash Telemetry Evaluation
+              <span className="font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                Gemini 2.5 Flash Sports Science Evaluation
+                <BookOpen className="w-3 h-3 text-zinc-400" />
               </span>
               <Sparkles className="w-3 h-3 text-orange-400 animate-pulse" />
             </div>
             <div className="flex items-center gap-2 text-zinc-400">
               <span className="text-[11px] hidden sm:inline">
-                {expanded ? "Collapse Analysis" : "Expand Split Telemetry"}
+                {expanded ? "Collapse Analysis" : "Expand Sports Science & Splits"}
               </span>
               {expanded ? (
                 <ChevronUp className="w-4 h-4 text-emerald-400" />
@@ -235,7 +277,7 @@ export function ActivityCard({ activity }: ActivityCardProps) {
                       Kilometer Split Telemetry
                     </h4>
                     <span className="text-[10px] text-zinc-600 font-mono">
-                      Target Pacer: 4:58/km
+                      Metric Splits
                     </span>
                   </div>
 
@@ -247,7 +289,6 @@ export function ActivityCard({ activity }: ActivityCardProps) {
                           <th className="text-left py-2 px-3">Pace</th>
                           <th className="text-left py-2 px-3">Heart Rate</th>
                           <th className="text-left py-2 px-3">Elevation</th>
-                          <th className="text-left py-2 px-3">Split Delta</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -258,10 +299,6 @@ export function ActivityCard({ activity }: ActivityCardProps) {
                           elevation_difference?: number;
                         }>).map((split) => {
                           const splitPace = speedToPace(split.average_speed);
-                          const paceSec = 1000 / split.average_speed;
-                          const targetPaceSec = 298; // 4:58
-                          const diff = Math.round(paceSec - targetPaceSec);
-
                           return (
                             <tr
                               key={split.split}
@@ -296,17 +333,6 @@ export function ActivityCard({ activity }: ActivityCardProps) {
                                   ? `${split.elevation_difference > 0 ? "+" : ""}${split.elevation_difference.toFixed(0)}m`
                                   : "—"}
                               </td>
-                              <td className="py-2 px-3">
-                                <span
-                                  className={`text-[10px] px-1.5 py-0.5 rounded ${
-                                    diff <= 0
-                                      ? "bg-emerald-500/10 text-emerald-400"
-                                      : "bg-zinc-800 text-zinc-400"
-                                  }`}
-                                >
-                                  {diff <= 0 ? `${diff}s target` : `+${diff}s`}
-                                </span>
-                              </td>
                             </tr>
                           );
                         })}
@@ -319,14 +345,14 @@ export function ActivityCard({ activity }: ActivityCardProps) {
               {/* AI Coach Detailed Feedback */}
               <div className="bg-[#121215] rounded-xl p-5 border border-[#27272A] relative">
                 <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  <Bot className="w-3 h-3" /> REST Protocol
+                  <Bot className="w-3 h-3" /> Gemini 2.5 Flash
                 </div>
                 <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono mb-3 flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                  Norwegian Methodology Report
+                  Sports Science Coaching Diagnosis
                 </h4>
                 <div className="text-xs text-zinc-300 leading-relaxed font-mono whitespace-pre-wrap">
-                  {activity.aiFeedback}
+                  {feedback}
                 </div>
               </div>
             </div>

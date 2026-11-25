@@ -16,6 +16,7 @@ interface DiscordEmbed {
 }
 
 interface RunSummary {
+  athleteName?: string;
   activityName: string;
   distanceKm: string;
   avgPace: string;
@@ -38,14 +39,15 @@ const PHASE_COLORS: Record<string, number> = {
 };
 
 /**
- * Sends a formatted run report to Discord webhook
+ * Sends a formatted run report to a Discord webhook
  */
 export async function sendDiscordNotification(
-  summary: RunSummary
+  summary: RunSummary,
+  customWebhookUrl?: string | null
 ): Promise<void> {
-  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  const webhookUrl = customWebhookUrl || process.env.DISCORD_WEBHOOK_URL;
   if (!webhookUrl) {
-    console.warn("DISCORD_WEBHOOK_URL not configured, skipping notification");
+    console.log("[Discord] No webhook URL configured, skipping notification");
     return;
   }
 
@@ -57,9 +59,11 @@ export async function sendDiscordNotification(
       ? summary.aiFeedback.slice(0, 897) + "..."
       : summary.aiFeedback;
 
+  const athleteLabel = summary.athleteName ? ` • ${summary.athleteName}` : "";
+
   const embed: DiscordEmbed = {
     title: `🏃 ${summary.activityName}`,
-    description: `**${summary.trainingPhase.toUpperCase()} PHASE** • ${summary.startDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}`,
+    description: `**${summary.trainingPhase.toUpperCase()} PHASE** • ${summary.startDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}${athleteLabel}`,
     color,
     fields: [
       {
@@ -100,21 +104,20 @@ export async function sendDiscordNotification(
         inline: true,
       },
       {
-        name: "🤖 AI Coach Analysis",
+        name: "🤖 AI Sports Science Coach",
         value: feedbackTruncated,
         inline: false,
       },
     ],
     footer: {
-      text: "PacePulse • AI Running Coach & Telemetry",
+      text: "PacePulse SaaS • AI Running Coach & Telemetry",
     },
     timestamp: summary.startDate.toISOString(),
   };
 
   const payload = {
-    username: "PacePulse Coach",
-    avatar_url:
-      "https://cdn.discordapp.com/emojis/running_emoji.png",
+    username: summary.athleteName ? `PacePulse (${summary.athleteName})` : "PacePulse Coach",
+    avatar_url: "https://cdn.discordapp.com/emojis/running_emoji.png",
     embeds: [embed],
   };
 
@@ -126,7 +129,7 @@ export async function sendDiscordNotification(
 
   if (!res.ok && res.status !== 204) {
     const text = await res.text();
-    throw new Error(`Discord webhook error: ${res.status} ${text}`);
+    console.error(`[Discord] Webhook error: ${res.status} ${text}`);
   }
 }
 

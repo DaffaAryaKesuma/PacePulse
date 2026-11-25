@@ -1,5 +1,21 @@
 // Shared TypeScript types for PacePulse
 
+export interface AthleteInfo {
+  id: string;
+  username: string | null;
+  fullName: string;
+  avatarUrl: string | null;
+  goalDistance: string;
+  goalTimeSec: number;
+  currentPbSec: number | null;
+  thresholdHr: number | null;
+  maxHr: number;
+  thresholdPaceSec: number | null;
+  trainingPhase: string;
+  isPublic: boolean;
+  discordWebhookUrl?: string | null;
+}
+
 export interface ActivityData {
   id: string;
   stravaId: string; // BigInt serialized as string
@@ -19,6 +35,7 @@ export interface ActivityData {
   aiFeedback: string | null;
   trainingPhase: string;
   createdAt: string;
+  userId?: string;
 }
 
 export interface SplitData {
@@ -42,6 +59,7 @@ export interface DashboardData {
   activities: ActivityData[];
   weeklySummary: WeeklySummary;
   weeklyTrend: WeeklyTrendPoint[];
+  athlete?: AthleteInfo | null;
 }
 
 export interface WeeklyTrendPoint {

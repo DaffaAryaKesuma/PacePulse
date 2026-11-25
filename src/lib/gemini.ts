@@ -1,4 +1,6 @@
-// Gemini AI integration for running analysis
+// Gemini AI integration for running analysis with Sports Science Knowledge Base
+import { getSportsScienceSystemContext } from "./sports-science-kb";
+import { formatDuration } from "./formatting";
 
 interface SplitData {
   split: number;
@@ -19,36 +21,80 @@ interface RunningMetrics {
   splits?: SplitData[];
 }
 
-const ATHLETE_PROFILE = `
-Athlete Profile:
-- PB 10K: 51:44 | Debut HM: 02:04:08 | Target: Sub-1:45:00 HM (Pace 4:58/km)
-- Threshold HR: 173 bpm | Threshold Pace: 4:40/km
-- Training shoes: ASICS Novablast 5 (easy/long), ASICS Magic Speed 4 (tempo/race)
-- Methodology: Norwegian-lite / Threshold Lab (double threshold emphasis)
+export interface AthleteProfile {
+  fullName?: string;
+  goalDistance?: string;
+  goalTimeSec?: number;
+  currentPbSec?: number | null;
+  thresholdHr?: number | null;
+  maxHr?: number | null;
+  thresholdPaceSec?: number | null;
+  trainingPhase?: string;
+}
+
+const DEFAULT_PROFILE: AthleteProfile = {
+  fullName: "Athlete",
+  goalDistance: "Half Marathon",
+  goalTimeSec: 6300, // 1:45:00
+  currentPbSec: 7448, // 2:04:08
+  thresholdHr: 173,
+  maxHr: 190,
+  thresholdPaceSec: 280, // 4:40/km
+  trainingPhase: "Base",
+};
+
+function formatPaceSec(sec: number | null | undefined): string {
+  if (!sec) return "N/A";
+  const m = Math.floor(sec / 60);
+  const s = Math.round(sec % 60);
+  return `${m}:${s.toString().padStart(2, "0")}/km`;
+}
+
+/**
+ * Builds dynamic system instruction based on the user's personal profile and sports science knowledge base
+ */
+function buildSystemPrompt(userProfile?: AthleteProfile): string {
+  const profile = { ...DEFAULT_PROFILE, ...userProfile };
+
+  const athleteContext = `
+ATHLETE PROFILE:
+- Name: ${profile.fullName || "Athlete"}
+- Primary Goal: ${profile.goalDistance} in ${formatDuration(profile.goalTimeSec || 6300)}
+- Current Best (PB): ${profile.currentPbSec ? formatDuration(profile.currentPbSec) : "Not specified"}
+- Threshold HR (LT2): ${profile.thresholdHr ? `${profile.thresholdHr} bpm` : "Estimated 173 bpm"}
+- Maximum HR: ${profile.maxHr ? `${profile.maxHr} bpm` : "190 bpm"}
+- Threshold Pace: ${formatPaceSec(profile.thresholdPaceSec)}
+- Current Focus Phase: ${profile.trainingPhase || "Base"}
 `;
 
-const SYSTEM_PROMPT = `You are an elite AI running coach specializing in evidence-based threshold training methodology (Norwegian-lite / Threshold Lab approach). 
-${ATHLETE_PROFILE}
-Analyze the provided run data with precision. Your response must be structured in 4 short sections:
-1. **Session Summary** (2-3 sentences: what was accomplished, training zone hit)
-2. **Key Observations** (2-3 bullet points: HR trends, pacing consistency, cadence, elevation impact)
-3. **Training Phase Assessment** (1-2 sentences: current adaptations, fatigue markers)
-4. **Next Session Recommendation** (1-2 sentences: specific next workout with pace/HR targets)
+  return `You are an elite, evidence-based sports science running coach.
+${athleteContext}
 
-Be data-driven, specific, and concise. Total response under 250 words.`;
+${getSportsScienceSystemContext()}
+
+COACHING DIRECTIVES:
+Analyze the provided running telemetry session with scientific rigor. Your feedback MUST include:
+1. **Session Summary** (2-3 sentences: what was accomplished, target zone compliance).
+2. **Key Observations** (2-3 bullet points: pacing consistency, HR drift/decoupling, cadence, elevation impact).
+3. **Sports Science Literature Context** (CRITICAL: You MUST explicitly cite at least 1-2 scientific principles from the Knowledge Base above, e.g. Jack Daniels' VDOT/10% rule, Seiler's 80/20 polarized model, Pfitzinger's cardiac drift threshold, or Marius Bakken's sub-threshold lactate control).
+4. **Next Session Recommendation** (1-2 sentences: exact next prescription with target pace/HR ceiling and recovery guidance).
+
+Tone: Analytical, motivating, data-driven, concise. Keep total output under 260 words.`;
+}
 
 /**
  * Sends running metrics to Gemini AI and returns coaching feedback
  */
 export async function getGeminiFeedback(
-  metrics: RunningMetrics
+  metrics: RunningMetrics,
+  athleteProfile?: AthleteProfile
 ): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is not configured");
   }
 
-  const splitsText = metrics.splits
+  const splitsText = metrics.splits && metrics.splits.length > 0
     ? metrics.splits
         .map(
           (s) =>
@@ -59,16 +105,18 @@ export async function getGeminiFeedback(
 
   const userPrompt = `Analyze this running session:
 
-**Activity:** ${metrics.name}
+**Activity Name:** ${metrics.name}
 **Distance:** ${metrics.distanceKm.toFixed(2)} km
-**Avg Pace:** ${metrics.avgPace}/km
-**Avg HR:** ${metrics.avgHr ? Math.round(metrics.avgHr) + " bpm" : "N/A"}
+**Average Pace:** ${metrics.avgPace}/km
+**Average HR:** ${metrics.avgHr ? Math.round(metrics.avgHr) + " bpm" : "N/A"}
 **Max HR:** ${metrics.maxHr ? Math.round(metrics.maxHr) + " bpm" : "N/A"}
 **Cadence:** ${metrics.cadenceSpm ? metrics.cadenceSpm + " spm" : "N/A"}
-**Elevation Gain:** ${metrics.elevationGain ? metrics.elevationGain.toFixed(0) + " m" : "N/A"}
+**Total Elevation Gain:** ${metrics.elevationGain ? metrics.elevationGain.toFixed(0) + " m" : "N/A"}
 
 **Splits per km:**
 ${splitsText}`;
+
+  const systemPrompt = buildSystemPrompt(athleteProfile);
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -77,7 +125,7 @@ ${splitsText}`;
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         system_instruction: {
-          parts: [{ text: SYSTEM_PROMPT }],
+          parts: [{ text: systemPrompt }],
         },
         contents: [
           {
@@ -87,7 +135,7 @@ ${splitsText}`;
         ],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 512,
+          maxOutputTokens: 550,
         },
       }),
     }
