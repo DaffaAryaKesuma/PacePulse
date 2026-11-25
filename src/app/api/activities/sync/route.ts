@@ -45,13 +45,20 @@ export async function POST() {
           activity.average_speed
         );
 
-        // Check if already in DB and has aiFeedback to avoid unnecessary re-computation
+        // Check if already in DB and has valid aiFeedback (retry if previously pending/failed)
         const existing = await prisma.activity.findUnique({
           where: { stravaId: BigInt(activity.id) },
         });
 
+        const isPendingOrEmpty =
+          !existing?.aiFeedback ||
+          existing.aiFeedback === "AI analysis pending." ||
+          existing.aiFeedback === "AI sports science analysis pending generation.";
+
         let aiFeedback = existing?.aiFeedback || "";
-        if (!aiFeedback) {
+        let calledGemini = false;
+        if (isPendingOrEmpty) {
+          calledGemini = true;
           try {
             aiFeedback = await getGeminiFeedback(
               {
@@ -114,7 +121,7 @@ export async function POST() {
         });
 
         syncedResults.push({ id: activity.id, name: activity.name, status: "synced" });
-        await new Promise((r) => setTimeout(r, 200));
+        await new Promise((r) => setTimeout(r, calledGemini ? 1500 : 200));
       } catch (err) {
         console.error(`[User Sync] Error syncing activity ${runSummary.id}:`, err);
         syncedResults.push({ id: runSummary.id, name: runSummary.name, status: "error" });

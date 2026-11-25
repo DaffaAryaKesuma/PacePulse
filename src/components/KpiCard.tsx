@@ -71,45 +71,45 @@ export function KpiCard({
 
   return (
     <div
-      className={`group relative overflow-hidden bg-[#121215] border border-[#27272A] rounded-2xl p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl ${accent.borderGlow}`}
+      className={`group relative overflow-hidden bg-[#121215] border border-[#27272A] rounded-2xl p-3.5 sm:p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl ${accent.borderGlow}`}
     >
       {/* Subtle corner indicator */}
       <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-white/[0.03] to-transparent pointer-events-none" />
 
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between gap-2 mb-2.5 sm:mb-3">
         <div
-          className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-transform group-hover:scale-105 duration-200 ${accent.iconBg}`}
+          className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl border flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 duration-200 ${accent.iconBg}`}
         >
           <span className={accent.icon}>{icon}</span>
         </div>
         {trend && trendValue && (
           <div
-            className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-mono font-semibold ${trendColor} bg-zinc-900 border-[#27272A]`}
+            className={`flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono font-semibold whitespace-nowrap truncate max-w-[115px] sm:max-w-none ${trendColor} bg-zinc-900 border-[#27272A]`}
           >
-            <TrendIcon className="w-3 h-3" />
-            <span>{trendValue}</span>
+            <TrendIcon className="w-3 h-3 shrink-0" />
+            <span className="truncate">{trendValue}</span>
           </div>
         )}
       </div>
 
-      <div className="mb-1.5 flex items-baseline gap-1">
+      <div className="mb-1 sm:mb-1.5 flex items-baseline gap-1 min-w-0">
         <span
-          className={`text-3xl font-black font-mono tracking-tight ${accent.value}`}
+          className={`text-xl sm:text-2xl lg:text-3xl font-black font-mono tracking-tight truncate ${accent.value}`}
         >
           {value}
         </span>
         {unit && (
-          <span className="text-sm text-zinc-500 font-mono font-semibold">
+          <span className="text-xs sm:text-sm text-zinc-500 font-mono font-semibold shrink-0">
             {unit}
           </span>
         )}
       </div>
 
-      <p className="text-[11px] font-mono font-bold text-zinc-400 uppercase tracking-wider mb-1">
+      <p className="text-[10px] sm:text-[11px] font-mono font-bold text-zinc-400 uppercase tracking-wider mb-0.5 sm:mb-1 truncate">
         {title}
       </p>
       {subtitle && (
-        <p className="text-[11px] text-zinc-500 font-mono truncate">{subtitle}</p>
+        <p className="text-[10px] sm:text-[11px] text-zinc-500 font-mono truncate">{subtitle}</p>
       )}
     </div>
   );

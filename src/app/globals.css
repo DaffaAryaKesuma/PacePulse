@@ -13,12 +13,14 @@
   box-sizing: border-box;
 }
 
+html,
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: "Geist Mono", "JetBrains Mono", "SF Mono", Monaco, Menlo, Consolas, "Liberation Mono", "Courier New", monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 /* Custom scrollbar */

@@ -4,7 +4,7 @@ import { ExternalLink, Terminal, Webhook, Zap } from "lucide-react";
 
 export function EmptyState() {
   return (
-    <div className="bg-[#121215] border border-[#27272A] rounded-xl p-8 text-center">
+    <div className="bg-[#121215] border border-[#27272A] rounded-xl p-5 sm:p-8 text-center">
       <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-4">
         <Zap className="w-8 h-8 text-emerald-400" />
       </div>
@@ -39,7 +39,7 @@ export function EmptyState() {
               <p className="text-xs text-zinc-500 mb-2">
                 Copy <code className="text-emerald-400 bg-zinc-900 px-1 rounded">.env.example</code> to <code className="text-emerald-400 bg-zinc-900 px-1 rounded">.env.local</code> and fill in all values.
               </p>
-              <code className="block text-xs font-mono text-zinc-400 bg-zinc-950 p-2 rounded border border-[#27272A]">
+              <code className="block text-xs font-mono text-zinc-400 bg-zinc-950 p-2 rounded border border-[#27272A] overflow-x-auto">
                 cp .env.example .env.local
               </code>
             </div>

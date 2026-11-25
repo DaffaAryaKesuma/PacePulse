@@ -149,35 +149,38 @@ export default function PersonalDashboard() {
     <div className="min-h-screen bg-[#09090B] text-white selection:bg-emerald-500/30 selection:text-emerald-400">
       {/* Top Navbar */}
       <header className="border-b border-[#27272A] bg-[#0E0E12]/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-emerald-400 font-bold tracking-wider">
-              <Radio className="w-3.5 h-3.5 animate-pulse" />
-              STRAVA OAUTH 2.0 • CONNECTED
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-mono">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <span className="flex items-center gap-1.5 text-emerald-400 font-bold tracking-wider truncate">
+              <Radio className="w-3.5 h-3.5 animate-pulse shrink-0" />
+              <span className="hidden sm:inline">STRAVA OAUTH 2.0 • CONNECTED</span>
+              <span className="sm:hidden">STRAVA CONNECTED</span>
             </span>
             <span className="hidden md:inline text-zinc-600">•</span>
-            <span className="hidden md:inline text-zinc-400">
+            <span className="hidden md:inline text-zinc-400 truncate">
               Welcome, <strong className="text-white">{currentUser?.fullName}</strong>
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Sync button for authenticated athlete */}
             <button
               onClick={handleUserSync}
               disabled={syncing}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 font-bold transition-all disabled:opacity-50"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 font-bold transition-all disabled:opacity-50 whitespace-nowrap"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
-              <span>{syncing ? "Syncing..." : "Sync Latest Runs"}</span>
+              <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${syncing ? "animate-spin" : ""}`} />
+              <span className="sm:hidden">{syncing ? "Syncing..." : "Sync"}</span>
+              <span className="hidden sm:inline">{syncing ? "Syncing..." : "Sync Latest Runs"}</span>
             </button>
 
             {/* Settings button */}
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#18181B] border border-[#27272A] text-zinc-300 hover:text-white hover:border-zinc-500 transition-all"
+              aria-label="Settings"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-[#18181B] border border-[#27272A] text-zinc-300 hover:text-white hover:border-zinc-500 transition-all"
             >
-              <Settings className="w-3.5 h-3.5 text-orange-400" />
+              <Settings className="w-3.5 h-3.5 text-orange-400 shrink-0" />
               <span className="hidden sm:inline">Settings</span>
             </button>
 
@@ -185,6 +188,7 @@ export default function PersonalDashboard() {
             <button
               onClick={handleLogout}
               title="Logout"
+              aria-label="Logout"
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#18181B] border border-[#27272A] text-zinc-500 hover:text-red-400 hover:border-red-500/30 transition-all"
             >
               <LogOut className="w-3.5 h-3.5" />
@@ -193,7 +197,7 @@ export default function PersonalDashboard() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
         {/* Sync Toast Feedback */}
         {syncMessage && (
           <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono flex items-center justify-between gap-3 shadow-xl">
@@ -240,7 +244,7 @@ export default function PersonalDashboard() {
         {!loading && data && (
           <>
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
               <KpiCard
                 title="Weekly Mileage"
                 value={data.weeklySummary.totalDistanceKm.toFixed(1)}
@@ -289,9 +293,9 @@ export default function PersonalDashboard() {
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-bold text-white font-mono uppercase tracking-wider flex items-center gap-2">
-                    <SlidersHorizontal className="w-4 h-4 text-emerald-400" />
-                    Your Running Telemetry & AI Coach Feed
+                  <h2 className="text-base sm:text-lg font-bold text-white font-mono uppercase tracking-wider flex items-center gap-2">
+                    <SlidersHorizontal className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Your Running Telemetry & AI Coach Feed</span>
                   </h2>
                   <p className="text-xs text-zinc-500 font-mono">
                     Sessions auto-evaluated against Jack Daniels, Seiler 80/20, Pfitzinger, and Marius Bakken literature
@@ -310,7 +314,7 @@ export default function PersonalDashboard() {
               </div>
 
               {data.activities.length === 0 ? (
-                <div className="bg-[#121215] border border-[#27272A] rounded-2xl p-10 text-center space-y-4">
+                <div className="bg-[#121215] border border-[#27272A] rounded-2xl p-6 sm:p-10 text-center space-y-4">
                   <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto">
                     <RefreshCw className="w-8 h-8 text-emerald-400" />
                   </div>
@@ -343,7 +347,7 @@ export default function PersonalDashboard() {
         )}
 
         {/* Footer */}
-        <footer className="mt-16 pt-6 border-t border-[#27272A] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600 font-mono">
+        <footer className="mt-12 sm:mt-16 pt-6 border-t border-[#27272A] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600 font-mono text-center sm:text-left">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span>PacePulse SaaS v2.0 • Multi-User Telemetry & Sports Science AI</span>

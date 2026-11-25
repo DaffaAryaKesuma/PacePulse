@@ -86,7 +86,7 @@ export function AthleteSettingsModal({
   };
 
   const modalBody = (
-    <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-9999 flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/80 backdrop-blur-md"
@@ -94,17 +94,17 @@ export function AthleteSettingsModal({
       />
 
       {/* Modal Dialog */}
-      <div className="relative z-10 w-full max-w-xl bg-[#121215] border border-[#27272A] rounded-2xl p-6 shadow-2xl my-8">
-        <div className="flex items-center justify-between pb-4 border-b border-[#27272A] mb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center">
-              <Settings className="w-5 h-5 text-orange-400" />
+      <div className="relative z-10 w-full max-w-xl bg-[#121215] border border-[#27272A] rounded-2xl p-4 sm:p-6 shadow-2xl my-4 sm:my-8">
+        <div className="flex items-start sm:items-center justify-between gap-2 pb-4 border-b border-[#27272A] mb-5">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center shrink-0">
+              <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-orange-400" />
             </div>
-            <div>
-              <h2 className="text-base font-bold text-white font-mono flex items-center gap-2">
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-bold text-white font-mono">
                 Athlete Profile & Sports Science Settings
               </h2>
-              <p className="text-xs text-zinc-500 font-mono">
+              <p className="text-[11px] sm:text-xs text-zinc-500 font-mono">
                 Dynamically calibrates Gemini AI prompts and target telemetry
               </p>
             </div>
@@ -112,7 +112,7 @@ export function AthleteSettingsModal({
           <button
             onClick={onClose}
             disabled={saving}
-            className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -304,35 +304,35 @@ export function AthleteSettingsModal({
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 pt-4">
+              <div className="flex items-center gap-3 pt-1 sm:pt-4">
                 <input
                   type="checkbox"
                   id="isPublicToggle"
                   checked={isPublic}
                   onChange={(e) => setIsPublic(e.target.checked)}
-                  className="w-4 h-4 rounded bg-zinc-900 border-zinc-700 text-emerald-500 focus:ring-0"
+                  className="w-4 h-4 rounded bg-zinc-900 border-zinc-700 text-emerald-500 focus:ring-0 shrink-0"
                 />
                 <label htmlFor="isPublicToggle" className="text-zinc-300 flex items-center gap-1.5 cursor-pointer">
-                  <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <Share2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   Allow Public Portfolio Showcase
                 </label>
               </div>
             </div>
           </div>
 
-          <div className="flex gap-3 pt-3">
+          <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:gap-3 pt-3">
             <button
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="flex-1 py-2.5 rounded-xl border border-[#27272A] text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              className="flex-1 py-3 sm:py-2.5 rounded-xl border border-[#27272A] text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-zinc-950 font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
+              className="flex-1 py-3 sm:py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-zinc-950 font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
             >
               {saving ? (
                 <>

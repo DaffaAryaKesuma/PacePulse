@@ -1,6 +1,6 @@
 "use client";
 
-import { Target, Zap, ShieldCheck, Flame, Gauge, Settings, Share2, Check, User as UserIcon } from "lucide-react";
+import { Target, Zap, ShieldCheck, Flame, Gauge, Settings, Share2, Check } from "lucide-react";
 import { useState } from "react";
 import type { AthleteInfo } from "@/types";
 import { formatDuration } from "@/lib/formatting";
@@ -111,21 +111,21 @@ export function AthleteHeader({
   };
 
   return (
-    <div className="mb-8 space-y-4">
+    <div className="mb-6 sm:mb-8 space-y-4">
       {/* Top Telemetry Status Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#27272A]/70">
-        <div className="flex items-center gap-3">
-          <div className="relative">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 pb-4 border-b border-[#27272A]/70">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="relative shrink-0">
             {athlete?.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={athlete.avatarUrl}
                 alt={athleteName}
-                className="w-12 h-12 rounded-xl border border-emerald-500/40 object-cover shadow-lg shadow-emerald-950/50"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border border-emerald-500/40 object-cover shadow-lg shadow-emerald-950/50"
               />
             ) : (
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-950/40 border border-emerald-500/40 flex items-center justify-center shadow-lg shadow-emerald-950/50">
-                <Zap className="w-6 h-6 text-emerald-400" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-linear-to-br from-emerald-500/20 to-emerald-950/40 border border-emerald-500/40 flex items-center justify-center shadow-lg shadow-emerald-950/50">
+                <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
               </div>
             )}
             <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -134,9 +134,9 @@ export function AthleteHeader({
             </span>
           </div>
 
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-black tracking-wider text-white font-mono">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <h1 className="text-lg sm:text-2xl font-black tracking-wider text-white font-mono wrap-break-word">
                 {athleteName.toUpperCase()}
               </h1>
               {athlete?.username && (
@@ -150,22 +150,22 @@ export function AthleteHeader({
                 </span>
               )}
             </div>
-            <p className="text-xs text-zinc-500 tracking-wider font-mono">
+            <p className="text-[11px] sm:text-xs text-zinc-500 tracking-wider font-mono">
               SPORTS SCIENCE KNOWLEDGE BASE • JACK DANIELS & NORWEGIAN PROTOCOLS
             </p>
           </div>
         </div>
 
         {/* Phase Pill & Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto w-full sm:w-auto">
           <div
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-mono font-bold tracking-wider uppercase transition-all duration-300 shadow-sm ${currentTheme.bg} ${currentTheme.border} ${currentTheme.text} ${currentTheme.glow}`}
+            className={`flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full border text-[11px] sm:text-xs font-mono font-bold tracking-wider uppercase transition-all duration-300 shadow-sm ${currentTheme.bg} ${currentTheme.border} ${currentTheme.text} ${currentTheme.glow}`}
           >
-            <span className={`w-2 h-2 rounded-full ${currentTheme.badge} animate-pulse`} />
-            {activePhase} Phase • Cap ≤ {hrCap} BPM
+            <span className={`w-2 h-2 rounded-full ${currentTheme.badge} animate-pulse shrink-0`} />
+            <span>{activePhase} Phase • Cap ≤ {hrCap} BPM</span>
           </div>
 
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#121215] border border-[#27272A] text-xs font-mono text-zinc-400">
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#121215] border border-[#27272A] text-xs font-mono text-zinc-400">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
             <span>LT2: {thresholdHr} BPM</span>
           </div>
@@ -194,33 +194,33 @@ export function AthleteHeader({
       </div>
 
       {/* Main Cockpit Banner: Target Goal Progression */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#121215] via-[#151518] to-[#121215] border border-[#27272A] p-6 shadow-2xl">
+      <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-[#121215] via-[#151518] to-[#121215] border border-[#27272A] p-4 sm:p-6 shadow-2xl">
         <div className="absolute -top-16 -left-16 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-center">
           {/* Target Progress Bar & Goal */}
           <div className="lg:col-span-8 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center shrink-0">
                   <Target className="w-4 h-4 text-orange-400" />
                 </div>
-                <div>
-                  <div className="text-xs font-mono uppercase tracking-widest text-zinc-400">
+                <div className="min-w-0">
+                  <div className="text-[11px] sm:text-xs font-mono uppercase tracking-widest text-zinc-400">
                     Primary Macro Milestone
                   </div>
-                  <div className="text-lg font-bold text-white font-mono flex items-center gap-2">
-                    {goalDistance.toUpperCase()} • SUB-{formatDuration(goalTimeSec)}
-                    <span className="text-xs px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 font-normal">
+                  <div className="text-base sm:text-lg font-bold text-white font-mono flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <span>{goalDistance.toUpperCase()} • SUB-{formatDuration(goalTimeSec)}</span>
+                    <span className="text-[11px] sm:text-xs px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 font-normal whitespace-nowrap">
                       PACE {targetPaceStr}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="text-right">
-                <span className="text-2xl font-black font-mono text-orange-400">
+              <div className="text-left sm:text-right">
+                <span className="text-xl sm:text-2xl font-black font-mono text-orange-400">
                   {progressPercent}%
                 </span>
                 <span className="text-xs text-zinc-500 ml-1 font-mono uppercase">Readiness</span>
@@ -231,15 +231,15 @@ export function AthleteHeader({
             <div className="space-y-1.5">
               <div className="h-3 w-full bg-[#18181B] rounded-full p-0.5 border border-[#27272A] overflow-hidden relative">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-orange-400 to-orange-500 transition-all duration-1000 shadow-md shadow-orange-500/20"
+                  className="h-full rounded-full bg-linear-to-r from-emerald-500 via-orange-400 to-orange-500 transition-all duration-1000 shadow-md shadow-orange-500/20"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
-              <div className="flex justify-between items-center text-[11px] font-mono text-zinc-500">
+              <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 text-[10px] sm:text-[11px] font-mono text-zinc-500">
                 <span>
                   Current PB: <strong className="text-zinc-300 font-bold">{formatDuration(pbSec)}</strong>
                 </span>
-                <span className="text-emerald-400 font-bold">
+                <span className="hidden sm:inline text-emerald-400 font-bold">
                   Progress Model Active
                 </span>
                 <span>
@@ -272,7 +272,7 @@ export function AthleteHeader({
           </div>
 
           {/* Right Column: Shoe Rotation telemetry */}
-          <div className="lg:col-span-4 bg-[#18181B]/80 rounded-xl p-4 border border-[#27272A] space-y-3">
+          <div className="lg:col-span-4 bg-[#18181B]/80 rounded-xl p-3.5 sm:p-4 border border-[#27272A] space-y-3">
             <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
               <span className="flex items-center gap-1.5 uppercase tracking-wider">
                 <Flame className="w-3.5 h-3.5 text-orange-400" /> Shoe Rotation
@@ -280,36 +280,38 @@ export function AthleteHeader({
               <span className="text-[10px] text-zinc-600">Malisoux et al. 2015</span>
             </div>
 
-            <div className="p-2.5 rounded-lg bg-[#121215] border border-[#27272A] flex items-center justify-between">
-              <div>
-                <div className="text-xs font-bold text-white font-mono flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  ASICS Novablast 5
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
+              <div className="p-2.5 rounded-lg bg-[#121215] border border-[#27272A] flex items-center justify-between gap-2">
+                <div>
+                  <div className="text-xs font-bold text-white font-mono flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                    ASICS Novablast 5
+                  </div>
+                  <div className="text-[10px] text-zinc-500 font-mono">
+                    Base Aerobic & Long Runs
+                  </div>
                 </div>
-                <div className="text-[10px] text-zinc-500 font-mono">
-                  Base Aerobic & Long Runs
+                <div className="text-right shrink-0">
+                  <div className="text-[11px] sm:text-xs font-mono font-bold text-emerald-400">
+                    Daily Cushion
+                  </div>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-xs font-mono font-bold text-emerald-400">
-                  Daily Cushion
-                </div>
-              </div>
-            </div>
 
-            <div className="p-2.5 rounded-lg bg-[#121215] border border-[#27272A] flex items-center justify-between">
-              <div>
-                <div className="text-xs font-bold text-white font-mono flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
-                  ASICS Magic Speed 4
+              <div className="p-2.5 rounded-lg bg-[#121215] border border-[#27272A] flex items-center justify-between gap-2">
+                <div>
+                  <div className="text-xs font-bold text-white font-mono flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />
+                    ASICS Magic Speed 4
+                  </div>
+                  <div className="text-[10px] text-zinc-500 font-mono">
+                    Threshold & Track Intervals
+                  </div>
                 </div>
-                <div className="text-[10px] text-zinc-500 font-mono">
-                  Threshold & Track Intervals
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-xs font-mono font-bold text-orange-400">
-                  Carbon Rocker
+                <div className="text-right shrink-0">
+                  <div className="text-[11px] sm:text-xs font-mono font-bold text-orange-400">
+                    Carbon Rocker
+                  </div>
                 </div>
               </div>
             </div>
