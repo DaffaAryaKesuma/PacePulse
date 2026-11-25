@@ -23,8 +23,11 @@ export async function GET() {
       maxHr: user.maxHr,
       thresholdPaceSec: user.thresholdPaceSec,
       trainingPhase: user.trainingPhase,
+      targetRaceDate: user.targetRaceDate ? user.targetRaceDate.toISOString() : null,
       discordWebhookUrl: user.discordWebhookUrl ? "configured" : null,
+      hasDiscordWebhook: Boolean(user.discordWebhookUrl),
       isPublic: user.isPublic,
+      preferredLanguage: user.preferredLanguage,
       createdAt: user.createdAt.toISOString(),
     },
   });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   MapPin,
@@ -9,32 +10,36 @@ import {
   Target,
   Loader2,
   RefreshCw,
-  LogOut,
-  Settings,
   Share2,
   Check,
   AlertCircle,
   Radio,
   SlidersHorizontal,
   Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { AthleteHeader } from "@/components/AthleteHeader";
 import { KpiCard } from "@/components/KpiCard";
 import { TelemetryCharts } from "@/components/TelemetryCharts";
 import { ActivityCard } from "@/components/ActivityCard";
-import { AthleteSettingsModal } from "@/components/AthleteSettingsModal";
+import { useLanguage } from "@/components/LanguageProvider";
 import { speedToPace } from "@/lib/formatting";
+import {
+  calculateAcwr,
+  calculateVdotPredictor,
+  resolveActiveTrainingPhase,
+} from "@/lib/sports-analytics";
 import type { DashboardData, AthleteInfo } from "@/types";
 
 export default function PersonalDashboard() {
   const router = useRouter();
+  const { t, setLanguage } = useLanguage();
   const [data, setData] = useState<DashboardData | null>(null);
   const [currentUser, setCurrentUser] = useState<AthleteInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // 1. Check user authentication
@@ -47,6 +52,9 @@ export default function PersonalDashboard() {
         return null;
       }
       setCurrentUser(json.user);
+      if (json.user.preferredLanguage === "id" || json.user.preferredLanguage === "en") {
+        setLanguage(json.user.preferredLanguage);
+      }
       return json.user;
     } catch {
       router.push("/?login=required");
@@ -81,15 +89,24 @@ export default function PersonalDashboard() {
     });
   }, [checkAuth, fetchData]);
 
-  // Handle Logout
-  const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      router.push("/");
-    } catch {
-      router.push("/");
-    }
-  };
+  useEffect(() => {
+    const onRefresh = () => {
+      void fetchData();
+    };
+    window.addEventListener("pacepulse:refresh", onRefresh);
+    const vdotPredictor = data ? calculateVdotPredictor(data.activities) : null;
+
+  const resolvedPhase =
+    currentUser && data
+      ? resolveActiveTrainingPhase(
+          currentUser,
+          data.activities,
+          calculateAcwr(data.activities)
+        )
+      : null;
+
+  return () => window.removeEventListener("pacepulse:refresh", onRefresh);
+  }, [fetchData]);
 
   // Handle Direct User Strava Sync (No admin secret needed!)
   const handleUserSync = async () => {
@@ -145,55 +162,35 @@ export default function PersonalDashboard() {
     return pace !== "--:--" ? `~${pace}/km` : "—";
   })();
 
+  const vdotPredictor = data ? calculateVdotPredictor(data.activities) : null;
+
+  const resolvedPhase =
+    currentUser && data
+      ? resolveActiveTrainingPhase(
+          currentUser,
+          data.activities,
+          calculateAcwr(data.activities)
+        )
+      : null;
+
   return (
     <div className="min-h-screen bg-[#09090B] text-white selection:bg-emerald-500/30 selection:text-emerald-400">
-      {/* Top Navbar */}
-      <header className="border-b border-[#27272A] bg-[#0E0E12]/80 backdrop-blur-md sticky top-0 z-40">
+      {/* Clean Page Topbar: Connection Status + Page Breadcrumb */}
+      <header className="border-b border-[#27272A] bg-[#0E0E12]/80 backdrop-blur-md sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-mono">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <span className="flex items-center gap-1.5 text-emerald-400 font-bold tracking-wider truncate">
               <Radio className="w-3.5 h-3.5 animate-pulse shrink-0" />
-              <span className="hidden sm:inline">STRAVA OAUTH 2.0 • CONNECTED</span>
-              <span className="sm:hidden">STRAVA CONNECTED</span>
+              <span className="hidden sm:inline">{t.nav.stravaConnectedFull}</span>
+              <span className="sm:hidden">{t.nav.stravaConnected}</span>
             </span>
-            <span className="hidden md:inline text-zinc-600">•</span>
-            <span className="hidden md:inline text-zinc-400 truncate">
-              Welcome, <strong className="text-white">{currentUser?.fullName}</strong>
-            </span>
+            <span className="text-zinc-600">•</span>
+            <span className="text-white font-bold truncate">{t.nav.overview}</span>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Sync button for authenticated athlete */}
-            <button
-              onClick={handleUserSync}
-              disabled={syncing}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 font-bold transition-all disabled:opacity-50 whitespace-nowrap"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${syncing ? "animate-spin" : ""}`} />
-              <span className="sm:hidden">{syncing ? "Syncing..." : "Sync"}</span>
-              <span className="hidden sm:inline">{syncing ? "Syncing..." : "Sync Latest Runs"}</span>
-            </button>
-
-            {/* Settings button */}
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              aria-label="Settings"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-[#18181B] border border-[#27272A] text-zinc-300 hover:text-white hover:border-zinc-500 transition-all"
-            >
-              <Settings className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-              <span className="hidden sm:inline">Settings</span>
-            </button>
-
-            {/* Logout button */}
-            <button
-              onClick={handleLogout}
-              title="Logout"
-              aria-label="Logout"
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#18181B] border border-[#27272A] text-zinc-500 hover:text-red-400 hover:border-red-500/30 transition-all"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          <span className="hidden md:inline text-zinc-400 truncate">
+            {t.nav.welcome} <strong className="text-white">{currentUser?.fullName}</strong>
+          </span>
         </div>
       </header>
 
@@ -206,7 +203,33 @@ export default function PersonalDashboard() {
               <span>{syncMessage}</span>
             </div>
             <button onClick={() => setSyncMessage(null)} className="text-emerald-400/70 hover:text-emerald-400">
-              Dismiss
+              {t.dashboard.dismiss}
+            </button>
+          </div>
+        )}
+
+        {/* Onboarding Banner when User Goal is Unset */}
+        {currentUser && !currentUser.goalDistance && (
+          <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-linear-to-r from-orange-500/15 via-amber-500/10 to-emerald-500/10 border border-orange-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center shrink-0 mt-0.5">
+                <Target className="w-4 h-4 text-orange-400" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold font-mono text-white">
+                  {t.onboarding.bannerTitle}
+                </h2>
+                <p className="text-xs font-mono text-zinc-300 mt-1">
+                  {t.onboarding.bannerSubtitle}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent("pacepulse:open-settings"))}
+              className="px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-zinc-950 font-mono font-bold text-xs transition-all shrink-0 shadow-lg shadow-orange-500/20"
+            >
+              {t.onboarding.ctaButton}
             </button>
           </div>
         )}
@@ -214,8 +237,10 @@ export default function PersonalDashboard() {
         {/* Athlete Cockpit Header */}
         <AthleteHeader
           athlete={currentUser}
+          resolvedPhase={resolvedPhase}
+          vdot={vdotPredictor?.vdot ?? null}
+          personalBests={data?.personalBests ?? []}
           isOwner={true}
-          onOpenSettings={() => setIsSettingsOpen(true)}
         />
 
         {/* Loading state */}
@@ -223,7 +248,7 @@ export default function PersonalDashboard() {
           <div className="flex items-center justify-center py-16">
             <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#121215] border border-[#27272A] text-zinc-400 text-xs font-mono">
               <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
-              <span>Loading telemetry analytics...</span>
+              <span>{t.dashboard.loadingTelemetry}</span>
             </div>
           </div>
         )}
@@ -236,7 +261,7 @@ export default function PersonalDashboard() {
               <span>{error}</span>
             </div>
             <button onClick={() => fetchData()} className="text-red-400 hover:text-red-300 underline">
-              Retry
+              {t.dashboard.retry}
             </button>
           </div>
         )}
@@ -246,41 +271,41 @@ export default function PersonalDashboard() {
             {/* KPI Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
               <KpiCard
-                title="Weekly Mileage"
+                title={t.kpi.weeklyMileage}
                 value={data.weeklySummary.totalDistanceKm.toFixed(1)}
                 unit="km"
-                subtitle={`${data.weeklySummary.sessionCount} sessions logged this week`}
+                subtitle={`${data.weeklySummary.sessionCount} ${t.kpi.sessionsLoggedWeek}`}
                 trend="up"
                 trendValue="+10% Rule"
                 icon={<MapPin className="w-5 h-5" />}
                 accentColor="emerald"
               />
               <KpiCard
-                title="Aerobic Efficiency"
+                title={t.kpi.aerobicEfficiency}
                 value={aerobicEfficiency}
                 unit="m/beat"
-                subtitle="Pfitzinger Cardiac Drift Index"
+                subtitle={t.kpi.pfitzingerIndex}
                 trend="up"
                 trendValue="Decoupling <5%"
                 icon={<Activity className="w-5 h-5" />}
                 accentColor="blue"
               />
               <KpiCard
-                title="Recorded Runs"
+                title={t.kpi.recordedRuns}
                 value={data.activities.length.toString()}
                 unit="runs"
-                subtitle="Analyzed by Sports Science AI"
+                subtitle={t.kpi.analyzedByAi}
                 trend="neutral"
                 trendValue="Auto Sync"
                 icon={<Heart className="w-5 h-5" />}
                 accentColor="orange"
               />
               <KpiCard
-                title="Latest Cruise Pace"
+                title={t.kpi.latestCruisePace}
                 value={projectedPace}
-                subtitle="Jack Daniels VDOT Projection"
+                subtitle={t.kpi.vdotProjection}
                 trend="up"
-                trendValue="On Track"
+                trendValue={t.kpi.onTrack}
                 icon={<Target className="w-5 h-5" />}
                 accentColor="purple"
               />
@@ -295,10 +320,10 @@ export default function PersonalDashboard() {
                 <div>
                   <h2 className="text-base sm:text-lg font-bold text-white font-mono uppercase tracking-wider flex items-center gap-2">
                     <SlidersHorizontal className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Your Running Telemetry & AI Coach Feed</span>
+                    <span>{t.dashboard.feedTitle}</span>
                   </h2>
                   <p className="text-xs text-zinc-500 font-mono">
-                    Sessions auto-evaluated against Jack Daniels, Seiler 80/20, Pfitzinger, and Marius Bakken literature
+                    {t.dashboard.feedSubtitle}
                   </p>
                 </div>
 
@@ -308,7 +333,7 @@ export default function PersonalDashboard() {
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#18181B] border border-[#27272A] text-zinc-400 hover:text-white text-xs font-mono self-start sm:self-auto"
                   >
                     {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
-                    <span>{copied ? "Link Copied!" : `Public Profile (/u/${currentUser.username})`}</span>
+                    <span>{copied ? t.dashboard.linkCopied : `${t.dashboard.publicProfile} (/u/${currentUser.username})`}</span>
                   </button>
                 )}
               </div>
@@ -320,10 +345,10 @@ export default function PersonalDashboard() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-white font-mono">
-                      No Strava Runs Synchronized Yet
+                      {t.dashboard.noRunsTitle}
                     </h3>
                     <p className="text-xs text-zinc-500 font-mono max-w-md mx-auto mt-1">
-                      Click the button below to pull your 10 most recent runs from Strava and have Gemini AI analyze them automatically!
+                      {t.dashboard.noRunsDesc}
                     </p>
                   </div>
                   <button
@@ -332,14 +357,34 @@ export default function PersonalDashboard() {
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-mono font-bold text-xs transition-all shadow-lg shadow-emerald-500/20"
                   >
                     <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
-                    <span>{syncing ? "Syncing..." : "Sync 10 Latest Runs from Strava"}</span>
+                    <span>{syncing ? t.nav.syncing : t.dashboard.sync10Runs}</span>
                   </button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {data.activities.map((activity) => (
-                    <ActivityCard key={activity.id} activity={activity} canReanalyze={true} />
+                  {data.activities.slice(0, 3).map((activity, idx) => (
+                    <ActivityCard
+                      key={activity.id}
+                      activity={activity}
+                      canReanalyze={true}
+                      defaultExpanded={idx === 0}
+                      autoAnalyze={idx === 0}
+                    />
                   ))}
+
+                  {data.activities.length > 3 && (
+                    <div className="pt-2 flex justify-center">
+                      <Link
+                        href="/dashboard/history"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#121215] border border-[#27272A] hover:border-emerald-500/50 text-xs font-mono font-bold text-emerald-400 hover:text-emerald-300 transition-all"
+                      >
+                        <span>
+                          {t.dashboard.viewAllHistory} ({t.dashboard.totalSuffix} {data.activities.length})
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -350,25 +395,13 @@ export default function PersonalDashboard() {
         <footer className="mt-12 sm:mt-16 pt-6 border-t border-[#27272A] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600 font-mono text-center sm:text-left">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>PacePulse SaaS v2.0 • Multi-User Telemetry & Sports Science AI</span>
+            <span>{t.dashboard.footerLeft}</span>
           </div>
           <div>
-            Jack Daniels • Seiler 80/20 • Pfitzinger • Marius Bakken
+            {t.dashboard.footerRight}
           </div>
         </footer>
       </main>
-
-      {/* Settings Modal */}
-      {currentUser && (
-        <AthleteSettingsModal
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-          athlete={currentUser}
-          onUpdated={() => {
-            fetchData();
-          }}
-        />
-      )}
     </div>
   );
 }

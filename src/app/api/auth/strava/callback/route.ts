@@ -101,14 +101,13 @@ export async function GET(request: NextRequest) {
           stravaAccessToken: data.access_token,
           stravaRefreshToken: data.refresh_token,
           tokenExpiresAt: data.expires_at,
-          // If athlete is 168998449 or first signup, set calibrated defaults:
-          goalDistance: "Half Marathon",
-          goalTimeSec: 6300, // 1:45:00
-          currentPbSec: isMainAthlete ? 7448 : 7448, // 2:04:08
-          thresholdHr: isMainAthlete ? 173 : 173,
+          goalDistance: null,
+          goalTimeSec: null,
+          currentPbSec: null,
+          thresholdHr: null,
           maxHr: 190,
-          thresholdPaceSec: isMainAthlete ? 280 : 280, // 4:40/km
-          trainingPhase: "Base",
+          thresholdPaceSec: null,
+          trainingPhase: "auto",
           isPublic: true,
         },
       });

@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   stravaAuthUrl.searchParams.set("redirect_uri", redirectUri);
   stravaAuthUrl.searchParams.set("response_type", "code");
   stravaAuthUrl.searchParams.set("approval_prompt", "auto");
-  stravaAuthUrl.searchParams.set("scope", "activity:read_all,read");
+  stravaAuthUrl.searchParams.set("scope", "read,activity:read_all,profile:read_all");
 
   return NextResponse.redirect(stravaAuthUrl.toString());
 }

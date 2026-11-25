@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { waitUntil } from "@vercel/functions";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { getValidUserStravaToken, fetchStravaActivity } from "@/lib/strava";
 import { getGeminiFeedback } from "@/lib/gemini";
 import { sendDiscordNotification } from "@/lib/discord";
+import { syncUserPersonalBests } from "@/lib/pb-sync";
+import {
+  fetchRunEnvironment,
+  computeTrafficFrictionScore,
+  computeEasyRunDisciplineScore,
+} from "@/lib/environment";
 import {
   speedToPace,
   metersToKm,
@@ -46,16 +53,18 @@ export async function POST(request: NextRequest) {
   // Acknowledge immediately (<2 seconds SLA required by Strava)
   const response = NextResponse.json({ received: true }, { status: 200 });
 
-  // Process activity creation events asynchronously
+  // Process activity creation events asynchronously (kept alive on serverless via waitUntil)
   if (
     body.object_type === "activity" &&
     body.aspect_type === "create" &&
     body.object_id &&
     body.owner_id
   ) {
-    processMultiUserActivity(body.owner_id, body.object_id).catch((err: unknown) => {
-      console.error("[Strava Webhook] Asynchronous processing error:", err);
-    });
+    waitUntil(
+      processMultiUserActivity(body.owner_id, body.object_id).catch((err: unknown) => {
+        console.error("[Strava Webhook] Asynchronous processing error:", err);
+      })
+    );
   }
 
   return response;
@@ -95,6 +104,31 @@ async function processMultiUserActivity(ownerId: number, activityId: number): Pr
     activity.average_speed
   );
 
+  const resolvedPhase =
+    user.trainingPhase && user.trainingPhase !== "auto"
+      ? user.trainingPhase
+      : trainingPhase;
+  const gearName = activity.gear?.name ?? null;
+  const trafficFrictionScore = computeTrafficFrictionScore(
+    activity.elapsed_time,
+    activity.moving_time,
+    activity.splits_metric
+  );
+  const easyRunDisciplineScore = computeEasyRunDisciplineScore(
+    resolvedPhase,
+    activity.average_heartrate,
+    user.thresholdHr,
+    user.maxHr
+  );
+  const env =
+    activity.start_latlng && activity.start_latlng.length >= 2
+      ? await fetchRunEnvironment(
+          activity.start_latlng[0],
+          activity.start_latlng[1],
+          activity.start_date
+        )
+      : { temperatureC: null, humidityPct: null, aqi: null };
+
   // 5. Evaluate session with Gemini AI using Sports Science Knowledge Base and user's profile
   let aiFeedback = "";
   try {
@@ -108,6 +142,13 @@ async function processMultiUserActivity(ownerId: number, activityId: number): Pr
         cadenceSpm,
         elevationGain: activity.total_elevation_gain ?? null,
         splits: activity.splits_metric,
+        trainingPhase: resolvedPhase,
+        temperatureC: env.temperatureC,
+        humidityPct: env.humidityPct,
+        aqi: env.aqi,
+        trafficFrictionScore,
+        easyRunDisciplineScore,
+        contextTags: [],
       },
       {
         fullName: user.fullName,
@@ -117,7 +158,8 @@ async function processMultiUserActivity(ownerId: number, activityId: number): Pr
         thresholdHr: user.thresholdHr,
         maxHr: user.maxHr,
         thresholdPaceSec: user.thresholdPaceSec,
-        trainingPhase: user.trainingPhase || trainingPhase,
+        trainingPhase: resolvedPhase,
+        preferredLanguage: user.preferredLanguage,
       }
     );
   } catch (err) {
@@ -131,7 +173,13 @@ async function processMultiUserActivity(ownerId: number, activityId: number): Pr
     update: {
       name: activity.name,
       aiFeedback,
-      trainingPhase: user.trainingPhase || trainingPhase,
+      trainingPhase: resolvedPhase,
+      gearName,
+      temperatureC: env.temperatureC,
+      humidityPct: env.humidityPct,
+      aqi: env.aqi,
+      trafficFrictionScore,
+      easyRunDisciplineScore,
       userId: user.id,
     },
     create: {
@@ -152,12 +200,25 @@ async function processMultiUserActivity(ownerId: number, activityId: number): Pr
         ? (activity.splits_metric as unknown as Prisma.InputJsonValue)
         : Prisma.JsonNull,
       aiFeedback,
-      trainingPhase: user.trainingPhase || trainingPhase,
+      trainingPhase: resolvedPhase,
+      gearName,
+      temperatureC: env.temperatureC,
+      humidityPct: env.humidityPct,
+      aqi: env.aqi,
+      trafficFrictionScore,
+      easyRunDisciplineScore,
       userId: user.id,
     },
   });
 
   console.log(`[Strava Webhook] Activity ${activity.id} saved for User ${user.fullName} (${user.id})`);
+
+  // Sync Personal Bests in case this run set a new PB
+  try {
+    await syncUserPersonalBests(user.id, accessToken);
+  } catch (pbErr) {
+    console.warn("[Strava Webhook] Personal Best sync warning:", pbErr);
+  }
 
   // 7. Dispatch Discord Webhook notification if user has configured one or if main athlete
   const targetDiscordWebhook =
@@ -180,6 +241,7 @@ async function processMultiUserActivity(ownerId: number, activityId: number): Pr
           trainingPhase: user.trainingPhase || trainingPhase,
           aiFeedback,
           startDate: new Date(activity.start_date),
+          language: user.preferredLanguage,
         },
         targetDiscordWebhook
       );

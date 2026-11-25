@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
       maxHr: targetUser.maxHr,
       thresholdPaceSec: targetUser.thresholdPaceSec,
       trainingPhase: targetUser.trainingPhase,
+      preferredLanguage: targetUser.preferredLanguage,
     };
 
     // 3. Process each run

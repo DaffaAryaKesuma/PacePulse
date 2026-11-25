@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import { BarChart3, LineChart as LineIcon, Activity, Flame } from "lucide-react";
 import type { WeeklyTrendPoint } from "@/types";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface TelemetryChartsProps {
   weeklyTrend: WeeklyTrendPoint[];
@@ -74,15 +75,24 @@ const CustomTooltip = ({
 };
 
 export function TelemetryCharts({ weeklyTrend }: TelemetryChartsProps) {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<"both" | "volume" | "trend">("both");
 
   const chartData = weeklyTrend.map((w) => ({
     week: formatWeekLabel(w.week),
     Distance: parseFloat(w.distanceKm.toFixed(1)),
     "Avg HR": w.avgHr,
-    "Avg Pace": w.avgPaceSec,
+    "Avg Pace": w.avgPaceSec && w.avgPaceSec <= 900 ? w.avgPaceSec : null,
     Sessions: w.sessions,
   }));
+
+  const validPaces = chartData
+    .map((d) => d["Avg Pace"])
+    .filter((p): p is number => typeof p === "number" && p > 0);
+  const paceDomain: [number, number] | ["auto", "auto"] =
+    validPaces.length > 0
+      ? [Math.max(120, Math.min(...validPaces) - 30), Math.max(...validPaces) + 30]
+      : ["auto", "auto"];
 
   return (
     <div className="space-y-4 mb-8">
@@ -91,10 +101,10 @@ export function TelemetryCharts({ weeklyTrend }: TelemetryChartsProps) {
         <div>
           <h2 className="text-sm sm:text-base font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
             <Activity className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>Telemetry Graphs & Biometric Trends</span>
+            <span>{t.charts.title}</span>
           </h2>
           <p className="text-xs text-zinc-500 font-mono">
-            8-Week Rolling Progression • Volume & Lactate Heart Rate Correlation
+            {t.charts.subtitle}
           </p>
         </div>
 
@@ -107,8 +117,8 @@ export function TelemetryCharts({ weeklyTrend }: TelemetryChartsProps) {
                 : "text-zinc-500 hover:text-zinc-300"
             }`}
           >
-            <span className="lg:hidden">Both</span>
-            <span className="hidden lg:inline">Side by Side</span>
+            <span className="lg:hidden">{t.charts.bothShort}</span>
+            <span className="hidden lg:inline">{t.charts.bothLong}</span>
           </button>
           <button
             onClick={() => setActiveTab("volume")}
@@ -118,7 +128,7 @@ export function TelemetryCharts({ weeklyTrend }: TelemetryChartsProps) {
                 : "text-zinc-500 hover:text-zinc-300"
             }`}
           >
-            Volume Only
+            {t.charts.volumeOnly}
           </button>
           <button
             onClick={() => setActiveTab("trend")}
@@ -128,7 +138,7 @@ export function TelemetryCharts({ weeklyTrend }: TelemetryChartsProps) {
                 : "text-zinc-500 hover:text-zinc-300"
             }`}
           >
-            Pace vs HR
+            {t.charts.paceVsHr}
           </button>
         </div>
       </div>
@@ -147,14 +157,14 @@ export function TelemetryCharts({ weeklyTrend }: TelemetryChartsProps) {
               <div>
                 <h3 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  Weekly Volume Load
+                  {t.charts.volumeTitle}
                 </h3>
                 <p className="text-[11px] sm:text-xs text-zinc-500 font-mono">
-                  Aerobic base mileage accumulator (km/week)
+                  {t.charts.volumeSubtitle}
                 </p>
               </div>
               <div className="px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] sm:text-[11px] font-mono font-bold shrink-0">
-                Goal: 45 km/wk
+                {t.charts.volumeGoal}
               </div>
             </div>
 
@@ -197,7 +207,7 @@ export function TelemetryCharts({ weeklyTrend }: TelemetryChartsProps) {
               </div>
             ) : (
               <div className="h-50 sm:h-60 flex items-center justify-center text-zinc-600 text-xs font-mono">
-                No telemetry recorded yet
+                {t.charts.noTelemetry}
               </div>
             )}
           </div>
@@ -210,14 +220,14 @@ export function TelemetryCharts({ weeklyTrend }: TelemetryChartsProps) {
               <div>
                 <h3 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
                   <LineIcon className="w-4 h-4 text-orange-400 shrink-0" />
-                  Aerobic Decoupling & Pace Trend
+                  {t.charts.trendTitle}
                 </h3>
                 <p className="text-[11px] sm:text-xs text-zinc-500 font-mono">
-                  Orange: Heart Rate (bpm) • Green: Cruise Pace
+                  {t.charts.trendSubtitle}
                 </p>
               </div>
               <div className="px-2.5 py-1 rounded bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1 shrink-0">
-                <Flame className="w-3 h-3" /> Efficiency Index ↑
+                <Flame className="w-3 h-3" /> {t.charts.efficiencyIndex}
               </div>
             </div>
 
@@ -254,6 +264,8 @@ export function TelemetryCharts({ weeklyTrend }: TelemetryChartsProps) {
                     <YAxis
                       yAxisId="pace"
                       orientation="right"
+                      reversed={true}
+                      domain={paceDomain}
                       width={40}
                       tick={{ fill: "#10B981", fontSize: 10, fontFamily: "monospace" }}
                       axisLine={false}
@@ -293,7 +305,7 @@ export function TelemetryCharts({ weeklyTrend }: TelemetryChartsProps) {
               </div>
             ) : (
               <div className="h-52.5 sm:h-60 flex items-center justify-center text-zinc-600 text-xs font-mono">
-                No telemetry recorded yet
+                {t.charts.noTelemetry}
               </div>
             )}
           </div>

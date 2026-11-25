@@ -28,6 +28,7 @@ interface RunSummary {
   trainingPhase: string;
   aiFeedback: string;
   startDate: Date;
+  language?: string;
 }
 
 // Discord embed colors
@@ -59,35 +60,37 @@ export async function sendDiscordNotification(
       ? summary.aiFeedback.slice(0, 897) + "..."
       : summary.aiFeedback;
 
+  const isId = summary.language !== "en";
   const athleteLabel = summary.athleteName ? ` • ${summary.athleteName}` : "";
+  const dateLocale = isId ? "id-ID" : "en-US";
 
   const embed: DiscordEmbed = {
     title: `🏃 ${summary.activityName}`,
-    description: `**${summary.trainingPhase.toUpperCase()} PHASE** • ${summary.startDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}${athleteLabel}`,
+    description: `**${summary.trainingPhase.toUpperCase()} ${isId ? "FASE" : "PHASE"}** • ${summary.startDate.toLocaleDateString(dateLocale, { weekday: "long", month: "short", day: "numeric" })}${athleteLabel}`,
     color,
     fields: [
       {
-        name: "📏 Distance",
+        name: isId ? "📏 Jarak" : "📏 Distance",
         value: `${summary.distanceKm} km`,
         inline: true,
       },
       {
-        name: "⏱️ Avg Pace",
+        name: isId ? "⏱️ Pace Rata-rata" : "⏱️ Avg Pace",
         value: `${summary.avgPace}/km`,
         inline: true,
       },
       {
-        name: "⏰ Duration",
+        name: isId ? "⏰ Durasi" : "⏰ Duration",
         value: summary.duration,
         inline: true,
       },
       {
-        name: "❤️ Avg HR",
+        name: isId ? "❤️ HR Rata-rata" : "❤️ Avg HR",
         value: summary.avgHr ? `${Math.round(summary.avgHr)} bpm` : "N/A",
         inline: true,
       },
       {
-        name: "💓 Max HR",
+        name: isId ? "💓 HR Maks" : "💓 Max HR",
         value: summary.maxHr ? `${Math.round(summary.maxHr)} bpm` : "N/A",
         inline: true,
       },
@@ -97,20 +100,22 @@ export async function sendDiscordNotification(
         inline: true,
       },
       {
-        name: "⛰️ Elevation",
+        name: isId ? "⛰️ Elevasi" : "⛰️ Elevation",
         value: summary.elevationGain
           ? `${summary.elevationGain.toFixed(0)} m`
           : "N/A",
         inline: true,
       },
       {
-        name: "🤖 AI Sports Science Coach",
+        name: isId ? "🤖 Pelatih AI Sains Olahraga" : "🤖 AI Sports Science Coach",
         value: feedbackTruncated,
         inline: false,
       },
     ],
     footer: {
-      text: "PacePulse SaaS • AI Running Coach & Telemetry",
+      text: isId
+        ? "PacePulse SaaS • Pelatih Lari AI & Telemetri"
+        : "PacePulse SaaS • AI Running Coach & Telemetry",
     },
     timestamp: summary.startDate.toISOString(),
   };

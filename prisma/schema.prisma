@@ -19,18 +19,62 @@ model User {
   stravaAccessToken  String
   stravaRefreshToken String
   tokenExpiresAt     Int
-  goalDistance       String     @default("Half Marathon")
-  goalTimeSec        Int        @default(6300)
+  goalDistance       String?
+  goalTimeSec        Int?
   currentPbSec       Int?
   thresholdHr        Int?
   maxHr              Int        @default(190)
   thresholdPaceSec   Int?
-  trainingPhase      String     @default("Base")
+  trainingPhase      String     @default("auto")
+  targetRaceDate     DateTime?
   discordWebhookUrl  String?
   isPublic           Boolean    @default(true)
+  preferredLanguage  String       @default("id")
   activities         Activity[]
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
+  weeklyPlans        WeeklyPlan[]
+  gears              Gear[]
+  personalBests      PersonalBest[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+}
+
+model PersonalBest {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  distanceKey  String
+  timeSeconds  Int
+  paceSecPerKm Int
+  activityId   String?
+  activityName String
+  achievedAt   DateTime
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, distanceKey])
+}
+
+model Gear {
+  id           String   @id @default(cuid())
+  stravaGearId String   @unique
+  name         String
+  distanceKm   Float    @default(0)
+  primary      Boolean  @default(false)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model WeeklyPlan {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekStart      DateTime
+  planJson       Json
+  rescheduleNote String?
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, weekStart])
 }
 
 model Activity {
@@ -49,9 +93,16 @@ model Activity {
   averageCadence     Float?
   totalElevationGain Float?
   splitsJson         Json?
-  aiFeedback         String?  @db.Text
-  trainingPhase      String   @default("Base")
-  userId             String
+  aiFeedback             String?  @db.Text
+  trainingPhase          String   @default("Base")
+  gearName               String?
+  temperatureC           Float?
+  humidityPct            Int?
+  aqi                    Int?
+  trafficFrictionScore   Int?
+  easyRunDisciplineScore Int?
+  contextTags            String[] @default([])
+  userId                 String
   user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt          DateTime @default(now())
 }

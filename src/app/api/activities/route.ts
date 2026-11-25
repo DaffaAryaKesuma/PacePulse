@@ -11,6 +11,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const requestedUsername = searchParams.get("username");
     const requestedUserId = searchParams.get("userId");
+    const limitParam = parseInt(searchParams.get("limit") || "", 10);
+    const activityLimit = !Number.isNaN(limitParam) && limitParam > 0 ? Math.min(limitParam, 500) : 500;
 
     // 1. Resolve target User
     let targetUser = null;
@@ -50,15 +52,30 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 2. Fetch run activities for this user
-    const activities = await prisma.activity.findMany({
-      where: {
-        userId: targetUser.id,
-        type: "Run",
-      },
-      orderBy: { startDate: "desc" },
-      take: 50,
-    });
+    // 2. Fetch run activities, total count, master gear & personal bests for this user
+    const [activities, totalActivities, gears, personalBests] = await Promise.all([
+      prisma.activity.findMany({
+        where: {
+          userId: targetUser.id,
+          type: { in: ["Run", "TrailRun", "VirtualRun"] },
+        },
+        orderBy: { startDate: "desc" },
+        take: activityLimit,
+      }),
+      prisma.activity.count({
+        where: {
+          userId: targetUser.id,
+          type: { in: ["Run", "TrailRun", "VirtualRun"] },
+        },
+      }),
+      prisma.gear.findMany({
+        where: { userId: targetUser.id },
+        orderBy: [{ primary: "desc" }, { distanceKm: "desc" }],
+      }),
+      prisma.personalBest.findMany({
+        where: { userId: targetUser.id },
+      }),
+    ]);
 
     // 3. Weekly summary (current week)
     const weekStart = getWeekStart();
@@ -117,7 +134,12 @@ export async function GET(request: NextRequest) {
 
       existing.distanceKm += a.distanceMeters / 1000;
       if (a.averageHeartrate) existing.hrValues.push(a.averageHeartrate);
-      if (a.averageSpeed > 0) existing.paceValues.push(1000 / a.averageSpeed);
+      if (a.averageSpeed > 0) {
+        const paceSec = 1000 / a.averageSpeed;
+        if (paceSec <= 900) {
+          existing.paceValues.push(paceSec);
+        }
+      }
       existing.sessions += 1;
       weekMap.set(key, existing);
     });
@@ -154,8 +176,25 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       activities: serializedActivities,
+      totalActivities,
       weeklySummary,
       weeklyTrend,
+      gears: gears.map((g) => ({
+        id: g.id,
+        stravaGearId: g.stravaGearId,
+        name: g.name,
+        distanceKm: g.distanceKm,
+        primary: g.primary,
+      })),
+      personalBests: personalBests.map((pb) => ({
+        id: pb.id,
+        distanceKey: pb.distanceKey,
+        timeSeconds: pb.timeSeconds,
+        paceSecPerKm: pb.paceSecPerKm,
+        activityId: pb.activityId,
+        activityName: pb.activityName,
+        achievedAt: pb.achievedAt.toISOString(),
+      })),
       athlete: {
         id: targetUser.id,
         username: targetUser.username,
@@ -168,7 +207,9 @@ export async function GET(request: NextRequest) {
         maxHr: targetUser.maxHr,
         thresholdPaceSec: targetUser.thresholdPaceSec,
         trainingPhase: targetUser.trainingPhase,
+        targetRaceDate: targetUser.targetRaceDate ? targetUser.targetRaceDate.toISOString() : null,
         isPublic: targetUser.isPublic,
+        preferredLanguage: targetUser.preferredLanguage,
       },
     });
   } catch (error) {

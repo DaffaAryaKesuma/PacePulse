@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useEffect, useCallback } from "react";
-import Link from "next/navigation";
+import Link from "next/link";
 import {
   MapPin,
   Heart,
@@ -11,11 +11,14 @@ import {
   AlertCircle,
   ExternalLink,
   Zap,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { AthleteHeader } from "@/components/AthleteHeader";
 import { KpiCard } from "@/components/KpiCard";
 import { TelemetryCharts } from "@/components/TelemetryCharts";
 import { ActivityCard } from "@/components/ActivityCard";
+import { LanguageToggle, useLanguage } from "@/components/LanguageProvider";
 import { speedToPace } from "@/lib/formatting";
 import type { DashboardData } from "@/types";
 
@@ -23,12 +26,16 @@ interface PageProps {
   params: Promise<{ username: string }>;
 }
 
+const PAGE_SIZE = 10;
+
 export default function PublicProfilePage({ params }: PageProps) {
   const { username } = use(params);
+  const { t } = useLanguage();
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -94,14 +101,15 @@ export default function PublicProfilePage({ params }: PageProps) {
 
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="hidden md:inline text-zinc-500">
-              Verified Sports Science Telemetry Portfolio
+              {t.nav.verifiedPortfolio}
             </span>
+            <LanguageToggle />
             <a
               href="/api/auth/strava"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-zinc-950 font-bold transition-all whitespace-nowrap"
             >
-              <span className="sm:hidden">Connect Strava</span>
-              <span className="hidden sm:inline">Connect Your Strava</span>
+              <span className="sm:hidden">{t.nav.connectStrava}</span>
+              <span className="hidden sm:inline">{t.nav.connectStravaFull}</span>
               <ExternalLink className="w-3.5 h-3.5 shrink-0" />
             </a>
           </div>
@@ -113,7 +121,7 @@ export default function PublicProfilePage({ params }: PageProps) {
           <div className="flex items-center justify-center py-20">
             <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#121215] border border-[#27272A] text-zinc-400 text-xs font-mono">
               <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
-              <span>Loading public athlete telemetry...</span>
+              <span>{t.publicProfile.loading}</span>
             </div>
           </div>
         )}
@@ -121,14 +129,14 @@ export default function PublicProfilePage({ params }: PageProps) {
         {error && !loading && (
           <div className="max-w-md mx-auto my-16 bg-[#121215] border border-red-500/30 rounded-2xl p-8 text-center space-y-4 font-mono">
             <AlertCircle className="w-10 h-10 text-red-400 mx-auto" />
-            <h3 className="text-base font-bold text-white">Profile Unavailable</h3>
+            <h3 className="text-base font-bold text-white">{t.publicProfile.unavailable}</h3>
             <p className="text-xs text-zinc-400">{error}</p>
-            <a
+            <Link
               href="/"
               className="inline-block px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold transition-colors"
             >
-              Return to PacePulse Home
-            </a>
+              {t.publicProfile.returnHome}
+            </Link>
           </div>
         )}
 
@@ -142,41 +150,41 @@ export default function PublicProfilePage({ params }: PageProps) {
             {/* KPI Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
               <KpiCard
-                title="Weekly Mileage"
+                title={t.kpi.weeklyMileage}
                 value={data.weeklySummary.totalDistanceKm.toFixed(1)}
                 unit="km"
-                subtitle={`${data.weeklySummary.sessionCount} sessions logged`}
+                subtitle={`${data.weeklySummary.sessionCount} ${t.kpi.sessionsLogged}`}
                 trend="up"
                 trendValue="+10% Rule"
                 icon={<MapPin className="w-5 h-5" />}
                 accentColor="emerald"
               />
               <KpiCard
-                title="Aerobic Decoupling"
+                title={t.kpi.aerobicDecoupling}
                 value={aerobicEfficiency}
                 unit="m/beat"
-                subtitle="Cardiac drift efficiency"
+                subtitle={t.kpi.cardiacDriftEff}
                 trend="up"
                 trendValue="Decoupling <5%"
                 icon={<Activity className="w-5 h-5" />}
                 accentColor="blue"
               />
               <KpiCard
-                title="Recorded Sessions"
+                title={t.kpi.recordedSessions}
                 value={data.activities.length.toString()}
                 unit="runs"
-                subtitle="Evaluated by AI Coach"
+                subtitle={t.kpi.evaluatedByCoach}
                 trend="neutral"
                 trendValue="Strava Verified"
                 icon={<Heart className="w-5 h-5" />}
                 accentColor="orange"
               />
               <KpiCard
-                title="Cruise Pace"
+                title={t.kpi.cruisePace}
                 value={projectedPace}
-                subtitle="Jack Daniels VDOT Pace"
+                subtitle={t.kpi.vdotPace}
                 trend="up"
-                trendValue="Target Ready"
+                trendValue={t.kpi.targetReady}
                 icon={<Target className="w-5 h-5" />}
                 accentColor="purple"
               />
@@ -189,24 +197,71 @@ export default function PublicProfilePage({ params }: PageProps) {
             <div className="space-y-4">
               <div className="border-b border-[#27272A] pb-3">
                 <h2 className="text-base font-bold text-white font-mono uppercase tracking-wider">
-                  Public Training Log & Gemini AI Coach Diagnoses
+                  {t.publicProfile.feedTitle}
                 </h2>
                 <p className="text-xs text-zinc-500 font-mono">
-                  Evidence-based splits, heart rate control, and sports science prescriptions
+                  {t.publicProfile.feedSubtitle}
                 </p>
               </div>
 
               {data.activities.length === 0 ? (
                 <div className="bg-[#121215] border border-[#27272A] rounded-xl p-8 text-center text-xs font-mono text-zinc-500">
-                  No public running sessions recorded yet.
+                  {t.publicProfile.noPublicSessions}
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {data.activities.map((activity) => (
-                    <ActivityCard key={activity.id} activity={activity} canReanalyze={false} />
-                  ))}
-                </div>
-              )}
+              ) : (() => {
+                const totalPages = Math.max(1, Math.ceil(data.activities.length / PAGE_SIZE));
+                const safePage = Math.min(currentPage, totalPages);
+                const pageItems = data.activities.slice(
+                  (safePage - 1) * PAGE_SIZE,
+                  safePage * PAGE_SIZE
+                );
+                return (
+                  <>
+                    <div className="space-y-4">
+                      {pageItems.map((activity) => (
+                        <ActivityCard key={activity.id} activity={activity} canReanalyze={false} />
+                      ))}
+                    </div>
+
+                    {totalPages > 1 && (
+                      <div className="pt-4 flex items-center justify-between gap-3 font-mono text-xs border-t border-[#27272A]">
+                        <button
+                          type="button"
+                          disabled={safePage <= 1}
+                          onClick={() => {
+                            setCurrentPage((p) => Math.max(1, p - 1));
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#121215] border border-[#27272A] text-zinc-300 hover:text-white hover:border-zinc-500 disabled:opacity-40 transition-all"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                          <span>{t.historyPage.prev}</span>
+                        </button>
+
+                        <span className="text-zinc-400">
+                          {t.historyPage.page}{" "}
+                          <strong className="text-white">{safePage}</strong>{" "}
+                          {t.historyPage.of}{" "}
+                          <strong className="text-white">{totalPages}</strong>
+                        </span>
+
+                        <button
+                          type="button"
+                          disabled={safePage >= totalPages}
+                          onClick={() => {
+                            setCurrentPage((p) => Math.min(totalPages, p + 1));
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#121215] border border-[#27272A] text-zinc-300 hover:text-white hover:border-zinc-500 disabled:opacity-40 transition-all"
+                        >
+                          <span>{t.historyPage.next}</span>
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </>
         )}
@@ -214,10 +269,10 @@ export default function PublicProfilePage({ params }: PageProps) {
         {/* Footer */}
         <footer className="mt-12 sm:mt-16 pt-6 border-t border-[#27272A] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600 font-mono text-center sm:text-left">
           <div>
-            PacePulse Public Athlete Showcase • Powered by Strava & Gemini 2.5 Flash
+            {t.publicProfile.footerLeft}
           </div>
           <a href="/api/auth/strava" className="text-orange-400 hover:underline">
-            Create Your Free Telemetry Dashboard →
+            {t.publicProfile.footerCta}
           </a>
         </footer>
       </main>

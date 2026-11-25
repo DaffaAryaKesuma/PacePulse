@@ -1,35 +1,47 @@
 "use client";
 
-import { Target, Zap, ShieldCheck, Flame, Gauge, Settings, Share2, Check } from "lucide-react";
+import { Target, Zap, ShieldCheck, Flame, Gauge, Share2, Check } from "lucide-react";
 import { useState } from "react";
-import type { AthleteInfo } from "@/types";
+import type { AthleteInfo, PersonalBestInfo } from "@/types";
+import { predictTimeSecForDistance, type ResolvedTrainingPhase } from "@/lib/sports-analytics";
 import { formatDuration } from "@/lib/formatting";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface AthleteHeaderProps {
   trainingPhase?: string;
+  resolvedPhase?: ResolvedTrainingPhase | null;
   hrCap?: number;
   isDemo?: boolean;
   athlete?: AthleteInfo | null;
-  onOpenSettings?: () => void;
   isOwner?: boolean;
+  vdot?: number | null;
+  personalBests?: PersonalBestInfo[];
 }
 
 export function AthleteHeader({
   trainingPhase: phaseProp,
+  resolvedPhase,
   hrCap: hrCapProp,
   isDemo,
   athlete,
-  onOpenSettings,
-  isOwner,
+  vdot,
+  personalBests,
 }: AthleteHeaderProps) {
+  const { language, t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
   // Dynamic parameters
-  const activePhase = athlete?.trainingPhase || phaseProp || "Base";
+  const activePhase =
+    resolvedPhase?.phase ||
+    (athlete?.trainingPhase && athlete.trainingPhase !== "auto"
+      ? athlete.trainingPhase
+      : phaseProp) ||
+    "Base";
   const athleteName = athlete?.fullName || "Endurance Athlete";
-  const goalDistance = athlete?.goalDistance || "Half Marathon";
-  const goalTimeSec = athlete?.goalTimeSec || 6300; // 1:45:00
-  const pbSec = athlete?.currentPbSec || 7448; // 2:04:08
+  const goalDistance = athlete?.goalDistance ?? null;
+  const goalTimeSec = athlete?.goalTimeSec ?? null;
+  const isGeneralFitness = goalDistance === "General Fitness";
+  const hasRaceGoal = Boolean(goalDistance && !isGeneralFitness && goalTimeSec && goalTimeSec > 0);
   const thresholdHr = athlete?.thresholdHr || 173;
   const maxHr = athlete?.maxHr || 190;
   const hrCap = hrCapProp || (thresholdHr > 0 ? thresholdHr - 11 : 162);
@@ -41,22 +53,38 @@ export function AthleteHeader({
     "Half Marathon": 21.0975,
     "Marathon": 42.195,
   };
-  const distKm = distanceKmMap[goalDistance] || 21.0975;
-  const targetPaceSecPerKm = Math.round(goalTimeSec / distKm);
+  const distancePbKeyMap: Record<string, string> = {
+    "5K": "5K",
+    "10K": "10K",
+    "Half Marathon": "HM",
+    "Marathon": "FM",
+  };
+  const distKm = goalDistance ? distanceKmMap[goalDistance] || 21.0975 : 0;
+  const targetPaceSecPerKm = hasRaceGoal && distKm > 0 && goalTimeSec ? Math.round(goalTimeSec / distKm) : 0;
   const targetPaceMin = Math.floor(targetPaceSecPerKm / 60);
   const targetPaceSec = Math.round(targetPaceSecPerKm % 60);
-  const targetPaceStr = `${targetPaceMin}:${targetPaceSec.toString().padStart(2, "0")}/km`;
+  const targetPaceStr =
+    targetPaceSecPerKm > 0
+      ? `${targetPaceMin}:${targetPaceSec.toString().padStart(2, "0")}/km`
+      : "—";
 
-  // Dynamic progress calculation: based on PB vs Goal
-  // Baseline is 15% slower than PB or standard
-  const worstBaseline = Math.round(pbSec * 1.15);
-  const progressPercent = Math.max(
-    10,
-    Math.min(
-      95,
-      Math.round(((worstBaseline - pbSec) / (worstBaseline - goalTimeSec)) * 100)
-    )
-  );
+  // Resolve current PB or VDOT-estimated time for the user's selected distance
+  const matchingPb = goalDistance
+    ? personalBests?.find((pb) => pb.distanceKey === distancePbKeyMap[goalDistance])
+    : undefined;
+  const vdotPredictedSec =
+    vdot && vdot > 0 && distKm > 0 ? predictTimeSecForDistance(vdot, distKm * 1000) : null;
+  const currentBestOrVdotSec =
+    matchingPb?.timeSeconds ?? athlete?.currentPbSec ?? vdotPredictedSec ?? null;
+
+  // Dynamic readiness: target time vs current PB / VDOT estimate for that distance
+  const progressPercent = (() => {
+    if (isGeneralFitness) return 100;
+    if (!hasRaceGoal || !goalTimeSec) return 0;
+    if (!currentBestOrVdotSec || currentBestOrVdotSec <= 0) return 50;
+    if (currentBestOrVdotSec <= goalTimeSec) return 100;
+    return Math.max(10, Math.min(99, Math.round((goalTimeSec / currentBestOrVdotSec) * 100)));
+  })();
 
   const phaseColors: Record<
     string,
@@ -89,6 +117,13 @@ export function AthleteHeader({
       border: "border-red-500/30",
       glow: "shadow-red-500/20",
       badge: "bg-red-500",
+    },
+    Taper: {
+      text: "text-purple-400",
+      bg: "bg-purple-500/10",
+      border: "border-purple-500/30",
+      glow: "shadow-purple-500/20",
+      badge: "bg-purple-500",
     },
     Race: {
       text: "text-red-400",
@@ -146,12 +181,12 @@ export function AthleteHeader({
               )}
               {isDemo && (
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-orange-500/10 text-orange-400 border border-orange-500/30 animate-pulse">
-                  DEMO TELEMETRY
+                  {t.header.demoTelemetry}
                 </span>
               )}
             </div>
             <p className="text-[11px] sm:text-xs text-zinc-500 tracking-wider font-mono">
-              SPORTS SCIENCE KNOWLEDGE BASE • JACK DANIELS & NORWEGIAN PROTOCOLS
+              {t.header.subtitle}
             </p>
           </div>
         </div>
@@ -159,10 +194,25 @@ export function AthleteHeader({
         {/* Phase Pill & Action Buttons */}
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto w-full sm:w-auto">
           <div
+            title={
+              resolvedPhase
+                ? language === "id"
+                  ? resolvedPhase.reasonId
+                  : resolvedPhase.reasonEn
+                : undefined
+            }
             className={`flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full border text-[11px] sm:text-xs font-mono font-bold tracking-wider uppercase transition-all duration-300 shadow-sm ${currentTheme.bg} ${currentTheme.border} ${currentTheme.text} ${currentTheme.glow}`}
           >
             <span className={`w-2 h-2 rounded-full ${currentTheme.badge} animate-pulse shrink-0`} />
-            <span>{activePhase} Phase • Cap ≤ {hrCap} BPM</span>
+            <span>
+              {resolvedPhase?.isAuto ? "🤖 AUTO: " : ""}
+              {resolvedPhase
+                ? language === "id"
+                  ? resolvedPhase.labelId
+                  : resolvedPhase.labelEn
+                : `${activePhase} ${t.header.phaseSuffix}`}{" "}
+              • {t.header.capLabel} ≤ {hrCap} BPM
+            </span>
           </div>
 
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#121215] border border-[#27272A] text-xs font-mono text-zinc-400">
@@ -177,17 +227,7 @@ export function AthleteHeader({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#18181B] border border-[#27272A] text-zinc-300 hover:text-white hover:border-emerald-500 text-xs font-mono transition-all"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5 text-zinc-400" />}
-              <span>{copied ? "Link Copied!" : "Public Link"}</span>
-            </button>
-          )}
-
-          {isOwner && onOpenSettings && (
-            <button
-              onClick={onOpenSettings}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400 hover:bg-orange-500/20 text-xs font-mono font-bold transition-all"
-            >
-              <Settings className="w-3.5 h-3.5" />
-              <span>Athlete Settings</span>
+              <span>{copied ? t.header.linkCopied : t.header.publicLink}</span>
             </button>
           )}
         </div>
@@ -208,23 +248,44 @@ export function AthleteHeader({
                 </div>
                 <div className="min-w-0">
                   <div className="text-[11px] sm:text-xs font-mono uppercase tracking-widest text-zinc-400">
-                    Primary Macro Milestone
+                    {t.header.primaryMilestone}
                   </div>
                   <div className="text-base sm:text-lg font-bold text-white font-mono flex flex-wrap items-center gap-1.5 sm:gap-2">
-                    <span>{goalDistance.toUpperCase()} • SUB-{formatDuration(goalTimeSec)}</span>
-                    <span className="text-[11px] sm:text-xs px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 font-normal whitespace-nowrap">
-                      PACE {targetPaceStr}
-                    </span>
+                    {isGeneralFitness ? (
+                      <>
+                        <span>{t.header.generalFitnessTitle}</span>
+                        <span className="text-[11px] sm:text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-normal whitespace-nowrap">
+                          {t.header.generalFitnessBadge}
+                        </span>
+                      </>
+                    ) : hasRaceGoal && goalTimeSec ? (
+                      <>
+                        <span>{goalDistance?.toUpperCase()} • SUB-{formatDuration(goalTimeSec)}</span>
+                        <span className="text-[11px] sm:text-xs px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 font-normal whitespace-nowrap">
+                          {t.header.paceLabel} {targetPaceStr}
+                        </span>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => window.dispatchEvent(new CustomEvent("pacepulse:open-settings"))}
+                        className="text-sm sm:text-base text-orange-400 hover:text-orange-300 underline underline-offset-4 transition-colors"
+                      >
+                        {t.header.noGoalSet}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className="text-left sm:text-right">
-                <span className="text-xl sm:text-2xl font-black font-mono text-orange-400">
-                  {progressPercent}%
-                </span>
-                <span className="text-xs text-zinc-500 ml-1 font-mono uppercase">Readiness</span>
-              </div>
+              {!isGeneralFitness && hasRaceGoal && (
+                <div className="text-left sm:text-right">
+                  <span className="text-xl sm:text-2xl font-black font-mono text-orange-400">
+                    {progressPercent}%
+                  </span>
+                  <span className="text-xs text-zinc-500 ml-1 font-mono uppercase">{t.header.readiness}</span>
+                </div>
+              )}
             </div>
 
             {/* Stepped Telemetry Progress Track */}
@@ -237,13 +298,23 @@ export function AthleteHeader({
               </div>
               <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 text-[10px] sm:text-[11px] font-mono text-zinc-500">
                 <span>
-                  Current PB: <strong className="text-zinc-300 font-bold">{formatDuration(pbSec)}</strong>
+                  {t.header.currentPb}{" "}
+                  <strong className="text-zinc-300 font-bold">
+                    {currentBestOrVdotSec ? formatDuration(currentBestOrVdotSec) : "—"}
+                  </strong>
                 </span>
                 <span className="hidden sm:inline text-emerald-400 font-bold">
-                  Progress Model Active
+                  {t.header.progressModelActive}
                 </span>
                 <span>
-                  Target: <strong className="text-orange-400 font-bold">{formatDuration(goalTimeSec)}</strong> ({targetPaceStr})
+                  {t.header.targetLabel}{" "}
+                  <strong className="text-orange-400 font-bold">
+                    {isGeneralFitness
+                      ? t.header.generalFitnessBadge
+                      : hasRaceGoal && goalTimeSec
+                      ? `${formatDuration(goalTimeSec)} (${targetPaceStr})`
+                      : "—"}
+                  </strong>
                 </span>
               </div>
             </div>
@@ -251,22 +322,22 @@ export function AthleteHeader({
             {/* Heart Rate Zones Reference Strip calibrated to user Max & Threshold HR */}
             <div className="pt-2 border-t border-[#27272A]/50 flex flex-wrap items-center gap-2 text-[10px] font-mono">
               <span className="text-zinc-500 uppercase tracking-wider flex items-center gap-1">
-                <Gauge className="w-3 h-3 text-emerald-400" /> HR Zones:
+                <Gauge className="w-3 h-3 text-emerald-400" /> {t.header.hrZones}
               </span>
               <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                Z1 Recovery &lt;{Math.round(maxHr * 0.70)}
+                {t.header.z1} &lt;{Math.round(maxHr * 0.70)}
               </span>
               <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                Z2 Aerobic {Math.round(maxHr * 0.70)}-{thresholdHr - 11}
+                {t.header.z2} {Math.round(maxHr * 0.70)}-{thresholdHr - 11}
               </span>
               <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                Z3 Tempo {thresholdHr - 10}-{thresholdHr - 1}
+                {t.header.z3} {thresholdHr - 10}-{thresholdHr - 1}
               </span>
               <span className="px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold">
-                Z4 Threshold {thresholdHr}-{Math.round(maxHr * 0.94)}
+                {t.header.z4} {thresholdHr}-{Math.round(maxHr * 0.94)}
               </span>
               <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20">
-                Z5 VO2 &gt;{Math.round(maxHr * 0.94)}
+                {t.header.z5} &gt;{Math.round(maxHr * 0.94)}
               </span>
             </div>
           </div>
@@ -275,7 +346,7 @@ export function AthleteHeader({
           <div className="lg:col-span-4 bg-[#18181B]/80 rounded-xl p-3.5 sm:p-4 border border-[#27272A] space-y-3">
             <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
               <span className="flex items-center gap-1.5 uppercase tracking-wider">
-                <Flame className="w-3.5 h-3.5 text-orange-400" /> Shoe Rotation
+                <Flame className="w-3.5 h-3.5 text-orange-400" /> {t.header.shoeRotation}
               </span>
               <span className="text-[10px] text-zinc-600">Malisoux et al. 2015</span>
             </div>
@@ -288,12 +359,12 @@ export function AthleteHeader({
                     ASICS Novablast 5
                   </div>
                   <div className="text-[10px] text-zinc-500 font-mono">
-                    Base Aerobic & Long Runs
+                    {t.header.shoeBaseDesc}
                   </div>
                 </div>
                 <div className="text-right shrink-0">
                   <div className="text-[11px] sm:text-xs font-mono font-bold text-emerald-400">
-                    Daily Cushion
+                    {t.header.shoeBaseTag}
                   </div>
                 </div>
               </div>
@@ -305,12 +376,12 @@ export function AthleteHeader({
                     ASICS Magic Speed 4
                   </div>
                   <div className="text-[10px] text-zinc-500 font-mono">
-                    Threshold & Track Intervals
+                    {t.header.shoeSpeedDesc}
                   </div>
                 </div>
                 <div className="text-right shrink-0">
                   <div className="text-[11px] sm:text-xs font-mono font-bold text-orange-400">
-                    Carbon Rocker
+                    {t.header.shoeSpeedTag}
                   </div>
                 </div>
               </div>

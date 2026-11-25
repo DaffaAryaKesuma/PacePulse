@@ -10,6 +10,14 @@ interface TokenResponse {
   refresh_token: string;
 }
 
+interface StravaBestEffort {
+  name: string;
+  elapsed_time: number;
+  moving_time: number;
+  distance: number;
+  start_date?: string;
+}
+
 interface StravaActivity {
   id: number;
   name: string;
@@ -25,7 +33,23 @@ interface StravaActivity {
   max_heartrate?: number;
   average_cadence?: number;
   total_elevation_gain?: number;
+  start_latlng?: [number, number] | null;
+  gear_id?: string | null;
+  gear?: { id: string; name: string } | null;
   splits_metric?: SplitMetric[];
+  best_efforts?: StravaBestEffort[];
+}
+
+interface StravaShoe {
+  id: string;
+  name: string;
+  distance: number; // in meters
+  primary?: boolean;
+}
+
+interface StravaAthleteProfile {
+  id: number;
+  shoes?: StravaShoe[];
 }
 
 interface SplitMetric {
@@ -153,4 +177,22 @@ export async function fetchStravaActivities(
   return (await res.json()) as StravaActivity[];
 }
 
-export type { StravaActivity, SplitMetric };
+/**
+ * Fetches the authenticated athlete profile (including shoes/gear master data)
+ */
+export async function fetchStravaAthlete(
+  accessToken: string
+): Promise<StravaAthleteProfile> {
+  const res = await fetch("https://www.strava.com/api/v3/athlete", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to fetch Strava athlete profile: ${res.status} ${text}`);
+  }
+
+  return (await res.json()) as StravaAthleteProfile;
+}
+
+export type { StravaActivity, SplitMetric, StravaBestEffort, StravaShoe, StravaAthleteProfile };

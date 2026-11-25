@@ -5,16 +5,21 @@ export interface AthleteInfo {
   username: string | null;
   fullName: string;
   avatarUrl: string | null;
-  goalDistance: string;
-  goalTimeSec: number;
+  goalDistance: string | null;
+  goalTimeSec: number | null;
   currentPbSec: number | null;
   thresholdHr: number | null;
   maxHr: number;
   thresholdPaceSec: number | null;
   trainingPhase: string;
+  targetRaceDate?: string | null;
   isPublic: boolean;
+  preferredLanguage?: string;
   discordWebhookUrl?: string | null;
+  hasDiscordWebhook?: boolean;
 }
+
+export type LifestyleTag = "poor_sleep" | "high_caffeine" | "heavy_legs" | "work_stress";
 
 export interface ActivityData {
   id: string;
@@ -34,6 +39,13 @@ export interface ActivityData {
   splitsJson: SplitData[] | null;
   aiFeedback: string | null;
   trainingPhase: string;
+  gearName?: string | null;
+  temperatureC?: number | null;
+  humidityPct?: number | null;
+  aqi?: number | null;
+  trafficFrictionScore?: number | null;
+  easyRunDisciplineScore?: number | null;
+  contextTags?: string[];
   createdAt: string;
   userId?: string;
 }
@@ -55,11 +67,32 @@ export interface WeeklySummary {
   weekStart: string;
 }
 
+export interface GearInfo {
+  id: string;
+  stravaGearId: string;
+  name: string;
+  distanceKm: number;
+  primary: boolean;
+}
+
+export interface PersonalBestInfo {
+  id: string;
+  distanceKey: string;
+  timeSeconds: number;
+  paceSecPerKm: number;
+  activityId: string | null;
+  activityName: string;
+  achievedAt: string;
+}
+
 export interface DashboardData {
   activities: ActivityData[];
+  totalActivities?: number;
   weeklySummary: WeeklySummary;
   weeklyTrend: WeeklyTrendPoint[];
   athlete?: AthleteInfo | null;
+  gears?: GearInfo[];
+  personalBests?: PersonalBestInfo[];
 }
 
 export interface WeeklyTrendPoint {
@@ -78,4 +111,26 @@ export interface StravaWebhookEvent {
   subscription_id: number;
   event_time: number;
   updates?: Record<string, unknown>;
+}
+
+export interface WeeklyPlanDay {
+  day: string;
+  sessionType: string;
+  distanceKm: number;
+  targetPace: string;
+  hrCap: string;
+  shoe: string;
+  rationale: string;
+  literatureCitation?: string;
+  intensity: "rest" | "easy" | "moderate" | "hard" | "long";
+}
+
+export interface WeeklyPlanData {
+  id: string;
+  weekStart: string;
+  days: WeeklyPlanDay[];
+  coachSummary?: string | null;
+  source?: "gemini" | "engine";
+  rescheduleNote: string | null;
+  updatedAt: string;
 }
