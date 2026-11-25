@@ -26,7 +26,7 @@ export function EmptyState() {
         {/* Step 1 */}
         <div className="bg-zinc-900/60 border border-[#27272A] rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-6 h-6 rounded bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
               <span className="text-xs font-bold text-emerald-400">1</span>
             </div>
             <div className="flex-1 min-w-0">
@@ -49,7 +49,7 @@ export function EmptyState() {
         {/* Step 2 */}
         <div className="bg-zinc-900/60 border border-[#27272A] rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-6 h-6 rounded bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
               <span className="text-xs font-bold text-emerald-400">2</span>
             </div>
             <div className="flex-1 min-w-0">
@@ -76,7 +76,7 @@ export function EmptyState() {
         {/* Step 3 */}
         <div className="bg-zinc-900/60 border border-[#27272A] rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-6 h-6 rounded bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
               <span className="text-xs font-bold text-emerald-400">3</span>
             </div>
             <div className="flex-1 min-w-0">

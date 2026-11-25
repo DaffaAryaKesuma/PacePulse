@@ -79,7 +79,7 @@ export function SyncButton({ onSyncComplete }: SyncButtonProps) {
   };
 
   const modalContent = showModal && (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
       {/* Dimmed Background Backdrop */}
       <div
         className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-300"
@@ -154,9 +154,9 @@ export function SyncButton({ onSyncComplete }: SyncButtonProps) {
             }`}
           >
             {result.success ? (
-              <Sparkles className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
             ) : (
-              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             )}
             <div className="leading-relaxed">{result.message}</div>
           </div>
@@ -210,8 +210,8 @@ export function SyncButton({ onSyncComplete }: SyncButtonProps) {
       {mounted &&
         toastMessage &&
         createPortal(
-          <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2.5 px-4 py-3 rounded-xl bg-emerald-500 text-zinc-950 font-mono text-xs font-bold shadow-2xl transition-all duration-300">
-            <Sparkles className="w-4 h-4 flex-shrink-0" />
+          <div className="fixed bottom-6 right-6 z-9999 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-emerald-500 text-zinc-950 font-mono text-xs font-bold shadow-2xl transition-all duration-300">
+            <Sparkles className="w-4 h-4 shrink-0" />
             <span>{toastMessage}</span>
           </div>,
           document.body

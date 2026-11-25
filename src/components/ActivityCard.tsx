@@ -141,7 +141,7 @@ export function ActivityCard({ activity, canReanalyze }: ActivityCardProps) {
         {/* Telemetry Metrics Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-3 border-y border-[#27272A]/70">
           <div className="bg-[#18181B]/60 p-3 rounded-xl border border-[#27272A]/60 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
               <Clock className="w-4 h-4 text-emerald-400" />
             </div>
             <div>
@@ -156,7 +156,7 @@ export function ActivityCard({ activity, canReanalyze }: ActivityCardProps) {
           </div>
 
           <div className="bg-[#18181B]/60 p-3 rounded-xl border border-[#27272A]/60 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0">
               <Heart className="w-4 h-4 text-orange-400" />
             </div>
             <div>
@@ -173,7 +173,7 @@ export function ActivityCard({ activity, canReanalyze }: ActivityCardProps) {
           </div>
 
           <div className="bg-[#18181B]/60 p-3 rounded-xl border border-[#27272A]/60 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
               <Footprints className="w-4 h-4 text-blue-400" />
             </div>
             <div>
@@ -188,7 +188,7 @@ export function ActivityCard({ activity, canReanalyze }: ActivityCardProps) {
           </div>
 
           <div className="bg-[#18181B]/60 p-3 rounded-xl border border-[#27272A]/60 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
               <Mountain className="w-4 h-4 text-purple-400" />
             </div>
             <div>
@@ -242,7 +242,7 @@ export function ActivityCard({ activity, canReanalyze }: ActivityCardProps) {
         <>
           <button
             onClick={() => setExpanded(!expanded)}
-            className="w-full flex items-center justify-between px-6 py-3.5 bg-gradient-to-r from-[#18181B] via-[#151518] to-[#18181B] border-t border-[#27272A] text-xs font-mono hover:bg-zinc-800/80 transition-all duration-200"
+            className="w-full flex items-center justify-between px-6 py-3.5 bg-linear-to-r from-[#18181B] via-[#151518] to-[#18181B] border-t border-[#27272A] text-xs font-mono hover:bg-zinc-800/80 transition-all duration-200"
           >
             <div className="flex items-center gap-2.5">
               <div className="w-6 h-6 rounded-md bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center">

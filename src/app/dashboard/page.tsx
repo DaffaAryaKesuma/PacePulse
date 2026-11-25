@@ -228,7 +228,7 @@ export default function PersonalDashboard() {
         {error && !loading && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 flex items-start justify-between gap-3 text-xs font-mono">
             <div className="flex items-center gap-2 text-red-400">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
             <button onClick={() => fetchData()} className="text-red-400 hover:text-red-300 underline">

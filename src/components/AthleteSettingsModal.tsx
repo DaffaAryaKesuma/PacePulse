@@ -86,7 +86,7 @@ export function AthleteSettingsModal({
   };
 
   const modalBody = (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/80 backdrop-blur-md"
@@ -120,14 +120,14 @@ export function AthleteSettingsModal({
 
         {error && (
           <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
           <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono flex items-center gap-2">
-            <Sparkles className="w-4 h-4 flex-shrink-0" />
+            <Sparkles className="w-4 h-4 shrink-0" />
             <span>Settings saved successfully! Updating telemetry...</span>
           </div>
         )}
