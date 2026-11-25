@@ -157,7 +157,7 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-12 sm:py-20 border-b border-[#27272A]/80">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] sm:w-[600px] h-[220px] sm:h-[300px] bg-linear-to-tr from-emerald-500/10 via-orange-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] sm:w-150 h-55 sm:h-75 bg-linear-to-tr from-emerald-500/10 via-orange-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-4xl mx-auto px-4 text-center space-y-5 sm:space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#18181B] border border-[#27272A] text-[10px] sm:text-xs font-mono text-zinc-300 max-w-full">

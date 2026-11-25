@@ -74,7 +74,7 @@ export function KpiCard({
       className={`group relative overflow-hidden bg-[#121215] border border-[#27272A] rounded-2xl p-3.5 sm:p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl ${accent.borderGlow}`}
     >
       {/* Subtle corner indicator */}
-      <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-white/[0.03] to-transparent pointer-events-none" />
+      <div className="absolute top-0 right-0 w-12 h-12 bg-linear-to-bl from-white/3 to-transparent pointer-events-none" />
 
       <div className="flex items-start justify-between gap-2 mb-2.5 sm:mb-3">
         <div
@@ -84,7 +84,7 @@ export function KpiCard({
         </div>
         {trend && trendValue && (
           <div
-            className={`flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono font-semibold whitespace-nowrap truncate max-w-[115px] sm:max-w-none ${trendColor} bg-zinc-900 border-[#27272A]`}
+            className={`flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-mono font-semibold whitespace-nowrap truncate max-w-28.75 sm:max-w-none ${trendColor} bg-zinc-900 border-[#27272A]`}
           >
             <TrendIcon className="w-3 h-3 shrink-0" />
             <span className="truncate">{trendValue}</span>
