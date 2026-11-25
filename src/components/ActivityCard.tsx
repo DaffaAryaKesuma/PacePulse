@@ -256,7 +256,7 @@ export function ActivityCard({ activity, canReanalyze }: ActivityCardProps) {
                 <Bot className="w-3.5 h-3.5 text-emerald-400" />
               </div>
               <span className="font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5 text-[11px] sm:text-xs truncate">
-                <span className="truncate">Gemini 2.5 Flash Sports Science Evaluation</span>
+                <span className="truncate">Gemini 3.8 Flash Sports Science Evaluation</span>
                 <BookOpen className="w-3 h-3 text-zinc-400 shrink-0 hidden sm:inline" />
               </span>
               <Sparkles className="w-3 h-3 text-orange-400 animate-pulse shrink-0" />
@@ -357,7 +357,7 @@ export function ActivityCard({ activity, canReanalyze }: ActivityCardProps) {
                     Sports Science Coaching Diagnosis
                   </h4>
                   <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
-                    <Bot className="w-3 h-3" /> Gemini 2.5 Flash
+                    <Bot className="w-3 h-3" /> Gemini 3.8 Flash
                   </div>
                 </div>
                 {reanalyzeError && (
