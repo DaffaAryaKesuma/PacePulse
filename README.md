@@ -163,5 +163,5 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Developer
 
-**Daffa Arya Kesuma** — Bachelor of Informatics (S.Kom), Full-Stack Developer  
+**Daffa Arya Kesuma** 
 GitHub: [@DaffaAryaKesuma](https://github.com/DaffaAryaKesuma)
