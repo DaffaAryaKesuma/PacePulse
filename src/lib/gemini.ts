@@ -115,6 +115,148 @@ ${languageDirective}
 Tone: Analytical, motivating, data-driven, concise. Keep total output under 260 words.`;
 }
 
+export async function callGeminiMultiTurnWithFallback(
+  systemPrompt: string,
+  contents: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }>,
+  options?: { temperature?: number; maxOutputTokens?: number }
+): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not configured");
+  }
+
+  const models = [
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-3-flash-preview",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-2.5-flash-lite",
+    "gemini-flash-lite-latest",
+  ];
+
+  let lastError: Error | null = null;
+
+  for (const model of models) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(20000),
+          body: JSON.stringify({
+            system_instruction: {
+              parts: [{ text: systemPrompt }],
+            },
+            contents,
+            generationConfig: {
+              temperature: options?.temperature ?? 0.65,
+              maxOutputTokens: options?.maxOutputTokens ?? 4096,
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const text = await response.text();
+        lastError = new Error(`Gemini API error (${model}): ${response.status} ${text}`);
+        if (response.status === 503 || response.status === 429 || response.status === 404) {
+          console.warn(`[Gemini Coach] ${model} returned ${response.status}, trying next fallback model...`);
+          continue;
+        }
+        throw lastError;
+      }
+
+      const data = (await response.json()) as {
+        candidates?: Array<{
+          content?: { parts?: Array<{ text?: string }> };
+        }>;
+      };
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text && text.trim()) {
+        return text.trim();
+      }
+      lastError = new Error(`Empty response from ${model}`);
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      console.warn(`[Gemini Coach] ${model} failed: ${lastError.message}`);
+    }
+  }
+
+  throw lastError ?? new Error("All Gemini models failed");
+}
+
+export async function streamGeminiMultiTurnWithFallback(
+  systemPrompt: string,
+  contents: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }>,
+  options?: { temperature?: number; maxOutputTokens?: number }
+): Promise<{ stream: ReadableStream<Uint8Array>; model: string }> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not configured");
+  }
+
+  const models = [
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-3-flash-preview",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-2.5-flash-lite",
+    "gemini-flash-lite-latest",
+  ];
+
+  let lastError: Error | null = null;
+
+  for (const model of models) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(25000),
+          body: JSON.stringify({
+            system_instruction: {
+              parts: [{ text: systemPrompt }],
+            },
+            contents,
+            generationConfig: {
+              temperature: options?.temperature ?? 0.65,
+              maxOutputTokens: options?.maxOutputTokens ?? 4096,
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const text = await response.text();
+        lastError = new Error(`Gemini SSE error (${model}): ${response.status} ${text}`);
+        if (response.status === 503 || response.status === 429 || response.status === 404) {
+          console.warn(`[Gemini Coach SSE] ${model} returned ${response.status}, trying next fallback model...`);
+          continue;
+        }
+        throw lastError;
+      }
+
+      if (response.body) {
+        return { stream: response.body, model };
+      }
+      lastError = new Error(`Empty stream body from ${model}`);
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      console.warn(`[Gemini Coach SSE] ${model} failed: ${lastError.message}`);
+    }
+  }
+
+  throw lastError ?? new Error("All Gemini streaming models failed");
+}
+
 async function callGeminiWithFallback(
   systemPrompt: string,
   userPrompt: string,

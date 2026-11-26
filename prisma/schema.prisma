@@ -34,6 +34,7 @@ model User {
   weeklyPlans        WeeklyPlan[]
   gears              Gear[]
   personalBests      PersonalBest[]
+  coachConversations CoachConversation[]
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
 }
@@ -103,6 +104,32 @@ model Activity {
   easyRunDisciplineScore Int?
   contextTags            String[] @default([])
   userId                 String
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt          DateTime @default(now())
+  user                   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coachConversations     CoachConversation[]
+  createdAt              DateTime            @default(now())
+}
+
+model CoachConversation {
+  id         String         @id @default(cuid())
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityId String?
+  activity   Activity?      @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  title      String
+  messages   CoachMessage[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([userId, updatedAt])
+}
+
+model CoachMessage {
+  id             String            @id @default(cuid())
+  conversationId String
+  conversation   CoachConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String            @db.Text
+  createdAt      DateTime          @default(now())
+
+  @@index([conversationId, createdAt])
 }

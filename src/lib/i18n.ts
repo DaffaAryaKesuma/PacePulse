@@ -21,6 +21,7 @@ export const translations = {
       history: "Riwayat Lari",
       plan: "Rencana Latihan",
       analytics: "Sports Lab & Gear",
+      coach: "AI Coach",
       home: "Beranda",
     },
     landing: {
@@ -194,6 +195,7 @@ export const translations = {
       tagHighCaffeine: "Kafein Tinggi",
       tagHeavyLegs: "Kaki Berat / DOMS",
       tagWorkStress: "Stres Kerja",
+      discussWithCoach: "Diskusikan dengan AI Coach",
     },
     analyticsPage: {
       title: "Sports Lab & Pelacak Sepatu",
@@ -332,6 +334,23 @@ export const translations = {
       saving: "Menyimpan...",
       save: "Simpan Pengaturan Atlet",
     },
+    coachPage: {
+      title: "AI Sports Science Coach",
+      subtitle: "Konsultasi personal berbasis VDOT, ACWR, zona HR & riwayat Strava Anda",
+      backToDashboard: "Kembali ke Dashboard",
+      newChat: "Obrolan Baru",
+      historyTitle: "Riwayat Konsultasi",
+      noHistory: "Belum ada riwayat percakapan.",
+      deleteChat: "Hapus percakapan",
+      focusedRunBadge: "Bedah Sesi Lari",
+      loading: "Memuat AI Coach...",
+      welcomeTitle: "Tanya Pelatih AI Sports Science Anda",
+      welcomeSubtitle:
+        "Seluruh jawaban disesuaikan secara dinamis dengan zona HR, target lomba, rencana mingguan, dan data lari Strava Anda.",
+      thinking: "Menganalisis telemetri & menyusun jawaban...",
+      inputPlaceholder: "Tanyakan tentang pace, zona HR, pemulihan, atau target lomba Anda...",
+      sendBtn: "Kirim",
+    },
   },
   en: {
     nav: {
@@ -353,6 +372,7 @@ export const translations = {
       history: "Run History",
       plan: "Training Plan",
       analytics: "Sports Lab & Gear",
+      coach: "AI Coach",
       home: "Home",
     },
     landing: {
@@ -526,6 +546,7 @@ export const translations = {
       tagHighCaffeine: "High Caffeine",
       tagHeavyLegs: "Heavy Legs / DOMS",
       tagWorkStress: "Work Stress",
+      discussWithCoach: "Discuss with AI Coach",
     },
     analyticsPage: {
       title: "Sports Lab & Gear Tracker",
@@ -663,6 +684,23 @@ export const translations = {
       cancel: "Cancel",
       saving: "Saving...",
       save: "Save Athlete Settings",
+    },
+    coachPage: {
+      title: "AI Sports Science Coach",
+      subtitle: "Personalized guidance calibrated to your VDOT, ACWR, HR zones & Strava telemetry",
+      backToDashboard: "Back to Dashboard",
+      newChat: "New Chat",
+      historyTitle: "Conversation History",
+      noHistory: "No conversations yet.",
+      deleteChat: "Delete conversation",
+      focusedRunBadge: "Focused Session",
+      loading: "Loading AI Coach...",
+      welcomeTitle: "Ask Your AI Sports Science Coach",
+      welcomeSubtitle:
+        "Every answer is dynamically calibrated to your HR zones, race goal, active weekly plan, and Strava running history.",
+      thinking: "Analyzing telemetry & composing response...",
+      inputPlaceholder: "Ask about your pace, HR zones, recovery, or race strategy...",
+      sendBtn: "Send",
     },
   },
 } as const;

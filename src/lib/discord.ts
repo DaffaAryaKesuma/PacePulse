@@ -44,12 +44,24 @@ const MAX_CHUNK_CHARS = 3800;
 const MAX_BATCH_CHARS = 5800;
 
 /**
+ * Ensures clean double-newline (`\n\n`) spacing before Markdown headings (`### `, `## `)
+ * and numbered section points (`1. **...`) so Discord renders paragraphs cleanly.
+ */
+function normalizeMarkdownSpacing(text: string): string {
+  return text
+    .replace(/\r\n/g, "\n")
+    .replace(/([^\n])\n(#{1,3}\s+)/g, "$1\n\n$2")
+    .replace(/([^\n])\n(\d+\.\s+\*\*)/g, "$1\n\n$2")
+    .trim();
+}
+
+/**
  * Splits Markdown text into chunks of at most `maxLen` characters,
- * preferring heading (`\n### `), paragraph (`\n\n`), line (`\n`), or word boundaries
- * so sentences and Markdown formatting are never split mid-word.
+ * preferring heading (`\n\n### `), paragraph (`\n\n`), line (`\n`), or word boundaries
+ * while preserving `\n\n` spacing before headings and numbered points.
  */
 export function chunkMarkdownText(text: string, maxLen = MAX_CHUNK_CHARS): string[] {
-  const cleaned = text.trim();
+  const cleaned = normalizeMarkdownSpacing(text);
   if (!cleaned) return [""];
   if (cleaned.length <= maxLen) return [cleaned];
 
@@ -60,8 +72,10 @@ export function chunkMarkdownText(text: string, maxLen = MAX_CHUNK_CHARS): strin
     const slice = remaining.slice(0, maxLen + 1);
 
     let splitIdx = -1;
-    // 1. Prefer splitting right before a Markdown heading if sufficiently far in
+    // 1. Prefer splitting right before a Markdown heading
     const headingIdx = Math.max(
+      slice.lastIndexOf("\n\n### "),
+      slice.lastIndexOf("\n\n## "),
       slice.lastIndexOf("\n### "),
       slice.lastIndexOf("\n## ")
     );
@@ -99,7 +113,7 @@ export function chunkMarkdownText(text: string, maxLen = MAX_CHUNK_CHARS): strin
     if (chunk) {
       chunks.push(chunk);
     }
-    remaining = remaining.slice(splitIdx).trimStart();
+    remaining = normalizeMarkdownSpacing(remaining.slice(splitIdx));
   }
 
   if (remaining.length > 0) {
@@ -120,8 +134,10 @@ function estimateEmbedChars(embed: DiscordEmbed): number {
 }
 
 /**
- * Sends a formatted run report to a Discord webhook using Auto-Chunking Multi-Embeds
- * and sequential requests when total embed size exceeds Discord's 6,000-char limit.
+ * Sends a formatted run report to a Discord webhook:
+ * - Embed #1: Activity header, phase/date/athlete subtitle, and 7-metric Telemetry Grid at the top.
+ * - Embed #2+: Auto-chunked AI Sports Science Coach evaluation (up to 3,800 chars/embed),
+ *   batched into sequential requests if total embed size exceeds 5,800 chars.
  */
 export async function sendDiscordNotification(
   summary: RunSummary,
@@ -138,26 +154,32 @@ export async function sendDiscordNotification(
   const athleteLabel = summary.athleteName ? ` • ${summary.athleteName}` : "";
   const dateLocale = isId ? "id-ID" : "en-US";
 
-  const headerLine = `**${summary.trainingPhase.toUpperCase()} ${isId ? "FASE" : "PHASE"}** • ${summary.startDate.toLocaleDateString(dateLocale, { weekday: "long", month: "short", day: "numeric" })}${athleteLabel}`;
+  const phaseUpper = summary.trainingPhase.trim().toUpperCase();
+  const phaseLabel =
+    phaseUpper === "AUTO"
+      ? isId
+        ? "FASE OTOMATIS"
+        : "AUTO PHASE"
+      : isId
+        ? `FASE ${phaseUpper}`
+        : `${phaseUpper} PHASE`;
 
-  // Reserve room for headerLine + separator in the first embed's description
-  const firstChunkLimit = Math.max(2000, MAX_CHUNK_CHARS - headerLine.length - 4);
-  const rawFeedback = summary.aiFeedback?.trim() || (isId ? "Evaluasi AI belum tersedia." : "AI evaluation unavailable.");
+  const headerLine = `**${phaseLabel}** • ${summary.startDate.toLocaleDateString(dateLocale, { weekday: "long", month: "short", day: "numeric" })}${athleteLabel}`;
 
-  const firstChunks = chunkMarkdownText(rawFeedback, firstChunkLimit);
-  const firstChunk = firstChunks[0] ?? "";
-  const remainingText = firstChunks.slice(1).join("\n\n");
-  const restChunks = remainingText ? chunkMarkdownText(remainingText, MAX_CHUNK_CHARS) : [];
-  const allChunks = [firstChunk, ...restChunks];
+  const rawFeedback =
+    summary.aiFeedback?.trim() ||
+    (isId ? "Evaluasi AI belum tersedia." : "AI evaluation unavailable.");
+  const chunks = chunkMarkdownText(rawFeedback, MAX_CHUNK_CHARS);
 
   const footerText = isId
     ? "PacePulse SaaS • Pelatih Lari AI & Telemetri"
     : "PacePulse SaaS • AI Running Coach & Telemetry";
 
+  // Embed #1: Header & Telemetry Grid (always appears at the very top)
   const embeds: DiscordEmbed[] = [
     {
       title: `🏃 ${summary.activityName}`,
-      description: `${headerLine}\n\n${firstChunk}`,
+      description: headerLine,
       color,
       fields: [
         {
@@ -201,15 +223,17 @@ export async function sendDiscordNotification(
     },
   ];
 
-  for (let i = 1; i < allChunks.length; i++) {
+  // Embed #2+: AI Sports Science Coach Evaluation (auto-chunked)
+  chunks.forEach((chunk, idx) => {
+    const partSuffix = chunks.length > 1 ? ` (${idx + 1}/${chunks.length})` : "";
     embeds.push({
       title: isId
-        ? `🤖 Lanjutan Evaluasi AI (${i + 1}/${allChunks.length})`
-        : `🤖 AI Evaluation Cont. (${i + 1}/${allChunks.length})`,
-      description: allChunks[i],
+        ? `🤖 Evaluasi Pelatih AI Sports Science${partSuffix}`
+        : `🤖 AI Sports Science Coach${partSuffix}`,
+      description: chunk,
       color,
     });
-  }
+  });
 
   // Attach footer and timestamp to the final embed
   const lastEmbed = embeds[embeds.length - 1];

@@ -8,6 +8,7 @@ import {
   History,
   CalendarClock,
   FlaskConical,
+  Bot,
   Zap,
   Home,
   RefreshCw,
@@ -128,6 +129,12 @@ export default function DashboardLayout({
       href: "/dashboard/analytics",
       label: t.nav.analytics,
       icon: FlaskConical,
+      exact: false,
+    },
+    {
+      href: "/coach",
+      label: t.nav.coach,
+      icon: Bot,
       exact: false,
     },
   ];
@@ -294,9 +301,9 @@ export default function DashboardLayout({
       {/* Mobile & Tablet Bottom Navigation Bar */}
       <nav
         aria-label="Mobile dashboard navigation"
-        className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[#27272A] bg-[#0E0E12]/95 backdrop-blur-md"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[#1E293B] bg-[#0B0F17]/95 backdrop-blur-md"
       >
-        <div className="grid grid-cols-4 h-16 max-w-xl mx-auto px-1 font-sans">
+        <div className="grid grid-cols-5 h-16 max-w-xl mx-auto px-1 font-sans">
           {navItems.map((item) => {
             const active = isActive(item.href, item.exact);
             const Icon = item.icon;
@@ -304,14 +311,14 @@ export default function DashboardLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center gap-1 rounded-xl mx-1 my-1.5 transition-colors ${
+                className={`flex flex-col items-center justify-center gap-1 rounded-xl mx-0.5 my-1.5 transition-colors ${
                   active
-                    ? "text-emerald-400 bg-emerald-500/10"
-                    : "text-zinc-500 hover:text-zinc-200"
+                    ? "text-[#C8F902] bg-[#C8F902]/10"
+                    : "text-slate-400 hover:text-slate-200"
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
-                <span className="text-[10px] font-bold truncate max-w-[96px]">
+                <span className="text-[10px] font-bold truncate max-w-[72px]">
                   {item.label}
                 </span>
               </Link>
