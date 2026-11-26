@@ -91,18 +91,18 @@ export default function PublicProfilePage({ params }: PageProps) {
   })();
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-white selection:bg-emerald-500/30 selection:text-emerald-400">
+    <div className="min-h-screen bg-[#09090B] text-white selection:bg-emerald-500/30 selection:text-emerald-400">
       {/* Top Banner */}
-      <header className="border-b border-[#1E293B] bg-[#0B0F17]/80 backdrop-blur-md sticky top-0 z-40">
+      <header className="border-b border-white/10 bg-[#09090B]/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-sans">
           <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
             <img
               src="/logo.jpg"
               alt="PacePulse"
-              className="w-7 h-7 rounded-lg object-cover border border-[#C8F902]/40 shrink-0"
+              className="w-7 h-7 rounded-lg object-cover border border-white/10 shrink-0"
             />
-            <span className="font-display italic text-base font-extrabold tracking-wider text-white">
-              PACE<span className="text-[#C8F902]">PULSE</span>
+            <span className="text-base font-extrabold tracking-wider text-white">
+              PACE<span className="text-emerald-400">PULSE</span>
             </span>
           </a>
 
@@ -126,7 +126,7 @@ export default function PublicProfilePage({ params }: PageProps) {
       <main className="max-w-6xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
         {loading && (
           <div className="flex items-center justify-center py-20">
-            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#131A26] border border-[#1E293B] text-zinc-400 text-xs font-sans">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#111114] border border-white/10 text-zinc-400 text-xs font-sans">
               <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
               <span>{t.publicProfile.loading}</span>
             </div>
@@ -134,7 +134,7 @@ export default function PublicProfilePage({ params }: PageProps) {
         )}
 
         {error && !loading && (
-          <div className="max-w-md mx-auto my-16 bg-[#131A26] border border-red-500/30 rounded-2xl p-8 text-center space-y-4 font-sans">
+          <div className="max-w-md mx-auto my-16 bg-[#111114] border border-red-500/30 rounded-2xl p-8 text-center space-y-4 font-sans">
             <AlertCircle className="w-10 h-10 text-red-400 mx-auto" />
             <h3 className="text-base font-bold text-white">{t.publicProfile.unavailable}</h3>
             <p className="text-xs text-zinc-400">{error}</p>
@@ -220,7 +220,7 @@ export default function PublicProfilePage({ params }: PageProps) {
 
             {/* Activities Feed */}
             <div className="space-y-4">
-              <div className="border-b border-[#1E293B] pb-3">
+              <div className="border-b border-white/10 pb-3">
                 <h2 className="text-base font-bold text-white font-sans uppercase tracking-wider">
                   {t.publicProfile.feedTitle}
                 </h2>
@@ -230,7 +230,7 @@ export default function PublicProfilePage({ params }: PageProps) {
               </div>
 
               {data.activities.length === 0 ? (
-                <div className="bg-[#131A26] border border-[#1E293B] rounded-xl p-8 text-center text-xs font-sans text-zinc-500">
+                <div className="bg-[#111114] border border-white/10 rounded-xl p-8 text-center text-xs font-sans text-zinc-500">
                   {t.publicProfile.noPublicSessions}
                 </div>
               ) : (() => {
@@ -249,7 +249,7 @@ export default function PublicProfilePage({ params }: PageProps) {
                     </div>
 
                     {totalPages > 1 && (
-                      <div className="pt-4 flex items-center justify-between gap-3 font-sans text-xs border-t border-[#1E293B]">
+                      <div className="pt-4 flex items-center justify-between gap-3 font-sans text-xs border-t border-white/10">
                         <button
                           type="button"
                           disabled={safePage <= 1}
@@ -257,7 +257,7 @@ export default function PublicProfilePage({ params }: PageProps) {
                             setCurrentPage((p) => Math.max(1, p - 1));
                             window.scrollTo({ top: 0, behavior: "smooth" });
                           }}
-                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#131A26] border border-[#1E293B] text-zinc-300 hover:text-white hover:border-zinc-500 disabled:opacity-40 transition-all"
+                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#111114] border border-white/10 text-zinc-300 hover:text-white hover:border-zinc-500 disabled:opacity-40 transition-all"
                         >
                           <ChevronLeft className="w-4 h-4" />
                           <span>{t.historyPage.prev}</span>
@@ -277,7 +277,7 @@ export default function PublicProfilePage({ params }: PageProps) {
                             setCurrentPage((p) => Math.min(totalPages, p + 1));
                             window.scrollTo({ top: 0, behavior: "smooth" });
                           }}
-                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#131A26] border border-[#1E293B] text-zinc-300 hover:text-white hover:border-zinc-500 disabled:opacity-40 transition-all"
+                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#111114] border border-white/10 text-zinc-300 hover:text-white hover:border-zinc-500 disabled:opacity-40 transition-all"
                         >
                           <span>{t.historyPage.next}</span>
                           <ChevronRight className="w-4 h-4" />
@@ -293,7 +293,7 @@ export default function PublicProfilePage({ params }: PageProps) {
         })()}
 
         {/* Footer */}
-        <footer className="mt-12 sm:mt-16 pt-6 border-t border-[#1E293B] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600 font-sans text-center sm:text-left">
+        <footer className="mt-12 sm:mt-16 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600 font-sans text-center sm:text-left">
           <div>
             {t.publicProfile.footerLeft}
           </div>

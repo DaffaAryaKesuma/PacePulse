@@ -143,8 +143,8 @@ export default function SportsLabAnalyticsPage() {
   const acwrBarWidth = Math.min(100, Math.round((acwr.ratio / 2.0) * 100));
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-white">
-      <header className="border-b border-[#1E293B] bg-[#0B0F17]/80 backdrop-blur-md sticky top-0 z-30">
+    <div className="min-h-screen bg-[#09090B] text-white">
+      <header className="border-b border-white/10 bg-[#09090B]/80 backdrop-blur-md sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-sans">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <span className="flex items-center gap-1.5 text-emerald-400 font-bold tracking-wider truncate">
@@ -160,8 +160,8 @@ export default function SportsLabAnalyticsPage() {
 
       <main className="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-6">
         <div>
-          <h1 className="font-display italic text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-2 tracking-wide">
-            <FlaskConical className="w-5 h-5 text-[#C8F902] shrink-0" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-2 tracking-wide">
+            <FlaskConical className="w-5 h-5 text-emerald-400 shrink-0" />
             <span>{t.analyticsPage.title}</span>
           </h1>
           <p className="text-xs font-sans text-zinc-500 mt-1">
@@ -171,7 +171,7 @@ export default function SportsLabAnalyticsPage() {
 
         {loading ? (
           <div className="py-20 flex items-center justify-center">
-            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#131A26] border border-[#1E293B] text-zinc-400 text-xs font-sans">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#111114] border border-white/10 text-zinc-400 text-xs font-sans">
               <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
               <span>{t.analyticsPage.loading}</span>
             </div>
@@ -180,7 +180,7 @@ export default function SportsLabAnalyticsPage() {
           <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Card 1: VDOT Race Predictor */}
-            <div className="bg-[#131A26] border border-[#1E293B] rounded-2xl p-5 space-y-4 shadow-xl">
+            <div className="bg-[#111114] border border-white/10 rounded-2xl p-5 space-y-4 shadow-xl">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h2 className="text-sm font-bold font-sans text-white uppercase tracking-wider flex items-center gap-2">
@@ -201,32 +201,32 @@ export default function SportsLabAnalyticsPage() {
               {vdotData ? (
                 <>
                   <div className="grid grid-cols-2 gap-2.5 font-sans">
-                    <div className="p-3 rounded-xl bg-[#0B0F17] border border-[#1E293B]">
+                    <div className="p-3 rounded-xl bg-[#09090B] border border-white/10">
                       <div className="text-[10px] text-zinc-500 uppercase">5K</div>
                       <div className="text-base font-black text-emerald-400">
                         {vdotData.predictions.fiveK}
                       </div>
                     </div>
-                    <div className="p-3 rounded-xl bg-[#0B0F17] border border-[#1E293B]">
+                    <div className="p-3 rounded-xl bg-[#09090B] border border-white/10">
                       <div className="text-[10px] text-zinc-500 uppercase">10K</div>
                       <div className="text-base font-black text-emerald-400">
                         {vdotData.predictions.tenK}
                       </div>
                     </div>
-                    <div className="p-3 rounded-xl bg-[#0B0F17] border border-[#1E293B]">
+                    <div className="p-3 rounded-xl bg-[#09090B] border border-white/10">
                       <div className="text-[10px] text-zinc-500 uppercase">21.1K (HM)</div>
                       <div className="text-base font-black text-orange-400">
                         {vdotData.predictions.halfMarathon}
                       </div>
                     </div>
-                    <div className="p-3 rounded-xl bg-[#0B0F17] border border-[#1E293B]">
+                    <div className="p-3 rounded-xl bg-[#09090B] border border-white/10">
                       <div className="text-[10px] text-zinc-500 uppercase">42.2K (FM)</div>
                       <div className="text-base font-black text-purple-400">
                         {vdotData.predictions.marathon}
                       </div>
                     </div>
                   </div>
-                  <div className="text-[11px] font-sans text-zinc-500 truncate pt-1 border-t border-[#1E293B]/60">
+                  <div className="text-[11px] font-sans text-zinc-500 truncate pt-1 border-t border-white/10/60">
                     {t.analyticsPage.vdotSource} <span className="text-zinc-300">{vdotData.sourceActivityName}</span>
                   </div>
                 </>
@@ -238,7 +238,7 @@ export default function SportsLabAnalyticsPage() {
             </div>
 
             {/* Card 2: ACWR Gauge */}
-            <div className="bg-[#131A26] border border-[#1E293B] rounded-2xl p-5 space-y-4 shadow-xl">
+            <div className="bg-[#111114] border border-white/10 rounded-2xl p-5 space-y-4 shadow-xl">
               <div>
                 <h2 className="text-sm font-bold font-sans text-white uppercase tracking-wider flex items-center gap-2">
                   <Gauge className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -260,7 +260,7 @@ export default function SportsLabAnalyticsPage() {
 
               {/* Gauge Bar */}
               <div className="space-y-1.5">
-                <div className="h-3 w-full rounded-full bg-[#0B0F17] border border-[#1E293B] overflow-hidden p-0.5">
+                <div className="h-3 w-full rounded-full bg-[#09090B] border border-white/10 overflow-hidden p-0.5">
                   <div
                     className={`h-full rounded-full transition-all duration-700 ${acwrStyle.bar}`}
                     style={{ width: `${acwrBarWidth}%` }}
@@ -274,15 +274,15 @@ export default function SportsLabAnalyticsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-[#1E293B]/60 font-sans text-xs">
-                <div className="p-2.5 rounded-xl bg-[#0B0F17]">
+              <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-white/10/60 font-sans text-xs">
+                <div className="p-2.5 rounded-xl bg-[#09090B]">
                   <div className="text-[10px] text-zinc-500">{t.analyticsPage.acuteLoad}</div>
                   <div className="text-sm font-bold text-white flex items-center gap-1">
                     <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                     {acwr.acuteKm.toFixed(1)} km
                   </div>
                 </div>
-                <div className="p-2.5 rounded-xl bg-[#0B0F17]">
+                <div className="p-2.5 rounded-xl bg-[#09090B]">
                   <div className="text-[10px] text-zinc-500">{t.analyticsPage.chronicLoad}</div>
                   <div className="text-sm font-bold text-zinc-300">
                     {acwr.chronicWeeklyAvgKm.toFixed(1)} km
@@ -292,7 +292,7 @@ export default function SportsLabAnalyticsPage() {
             </div>
 
             {/* Card 3: Shoe Mileage Tracker */}
-            <div className="bg-[#131A26] border border-[#1E293B] rounded-2xl p-5 space-y-4 shadow-xl">
+            <div className="bg-[#111114] border border-white/10 rounded-2xl p-5 space-y-4 shadow-xl">
               <div>
                 <h2 className="text-sm font-bold font-sans text-white uppercase tracking-wider flex items-center gap-2">
                   <Footprints className="w-4 h-4 text-blue-400 shrink-0" />
@@ -326,7 +326,7 @@ export default function SportsLabAnalyticsPage() {
                     return (
                       <div
                         key={shoe.gearName}
-                        className="p-3 rounded-xl bg-[#0B0F17] border border-[#1E293B] space-y-2 font-sans"
+                        className="p-3 rounded-xl bg-[#09090B] border border-white/10 space-y-2 font-sans"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="text-xs font-bold text-white truncate">
@@ -337,7 +337,7 @@ export default function SportsLabAnalyticsPage() {
                           </div>
                         </div>
 
-                        <div className="h-2 w-full rounded-full bg-[#131A26] overflow-hidden">
+                        <div className="h-2 w-full rounded-full bg-[#111114] overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all duration-500 ${barColor}`}
                             style={{ width: `${Math.min(100, shoe.percentage)}%` }}
@@ -371,8 +371,8 @@ export default function SportsLabAnalyticsPage() {
           </div>
 
           {/* Card 4: All-Time Personal Bests */}
-          <div className="bg-[#131A26] border border-[#1E293B] rounded-2xl p-5 space-y-4 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E293B] pb-4">
+          <div className="bg-[#111114] border border-white/10 rounded-2xl p-5 space-y-4 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
               <div>
                 <h2 className="text-sm sm:text-base font-bold font-sans text-white uppercase tracking-wider flex items-center gap-2">
                   <Medal className="w-4 h-4 text-amber-400 shrink-0" />
@@ -423,7 +423,7 @@ export default function SportsLabAnalyticsPage() {
                     return (
                       <div
                         key={cat.key}
-                        className="p-3.5 rounded-xl bg-[#0B0F17] border border-[#1E293B] flex flex-col justify-between gap-2"
+                        className="p-3.5 rounded-xl bg-[#09090B] border border-white/10 flex flex-col justify-between gap-2"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
@@ -441,7 +441,7 @@ export default function SportsLabAnalyticsPage() {
                             <div className="text-2xl font-black text-amber-400">
                               {formatDuration(pb.timeSeconds)}
                             </div>
-                            <div className="space-y-0.5 text-[10px] text-zinc-500 border-t border-[#1E293B]/60 pt-2">
+                            <div className="space-y-0.5 text-[10px] text-zinc-500 border-t border-white/10/60 pt-2">
                               <div className="text-zinc-300 font-semibold truncate" title={pb.activityName}>
                                 {pb.activityName}
                               </div>

@@ -149,9 +149,9 @@ export function AthleteSettingsModal({
       />
 
       {/* Modal Dialog */}
-      <div className="relative z-10 w-full max-w-xl max-h-[90dvh] flex flex-col bg-[#121215] border border-[#27272A] rounded-2xl shadow-2xl overflow-hidden">
+      <div className="relative z-10 w-full max-w-xl max-h-[90dvh] flex flex-col bg-[#111114] border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
         {/* Sticky Header */}
-        <div className="flex items-start sm:items-center justify-between gap-2 p-4 sm:p-5 border-b border-[#27272A] shrink-0">
+        <div className="flex items-start sm:items-center justify-between gap-2 p-4 sm:p-5 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center shrink-0">
               <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-orange-400" />
@@ -190,7 +190,7 @@ export function AthleteSettingsModal({
             </div>
           )}
           {/* Target Milestone */}
-          <div className="p-4 rounded-xl bg-[#18181B]/70 border border-[#27272A] space-y-3">
+          <div className="p-4 rounded-xl bg-zinc-900/70 border border-white/10 space-y-3">
             <div className="flex items-center gap-2 text-zinc-300 font-bold uppercase tracking-wider">
               <Target className="w-4 h-4 text-orange-400" /> {t.settings.raceGoalTitle}
             </div>
@@ -201,7 +201,7 @@ export function AthleteSettingsModal({
                 <select
                   value={goalDistance}
                   onChange={(e) => setGoalDistance(e.target.value)}
-                  className="w-full bg-[#121215] border border-[#27272A] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500/50"
+                  className="w-full bg-[#111114] border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500/50"
                 >
                   <option value="General Fitness">{t.settings.generalFitnessOption}</option>
                   <option value="5K">5K Road / Track</option>
@@ -222,7 +222,7 @@ export function AthleteSettingsModal({
                     value={goalHours}
                     onChange={(e) => setGoalHours(parseInt(e.target.value) || 0)}
                     placeholder="HH"
-                    className="bg-[#121215] border border-[#27272A] rounded-lg px-2 py-2 text-center text-white focus:outline-none focus:border-orange-500/50"
+                    className="bg-[#111114] border border-white/10 rounded-lg px-2 py-2 text-center text-white focus:outline-none focus:border-orange-500/50"
                   />
                   <input
                     type="number"
@@ -231,7 +231,7 @@ export function AthleteSettingsModal({
                     value={goalMinutes}
                     onChange={(e) => setGoalMinutes(parseInt(e.target.value) || 0)}
                     placeholder="MM"
-                    className="bg-[#121215] border border-[#27272A] rounded-lg px-2 py-2 text-center text-white focus:outline-none focus:border-orange-500/50"
+                    className="bg-[#111114] border border-white/10 rounded-lg px-2 py-2 text-center text-white focus:outline-none focus:border-orange-500/50"
                   />
                   <input
                     type="number"
@@ -240,7 +240,7 @@ export function AthleteSettingsModal({
                     value={goalSeconds}
                     onChange={(e) => setGoalSeconds(parseInt(e.target.value) || 0)}
                     placeholder="SS"
-                    className="bg-[#121215] border border-[#27272A] rounded-lg px-2 py-2 text-center text-white focus:outline-none focus:border-orange-500/50"
+                    className="bg-[#111114] border border-white/10 rounded-lg px-2 py-2 text-center text-white focus:outline-none focus:border-orange-500/50"
                   />
                 </div>
               </div>
@@ -258,7 +258,7 @@ export function AthleteSettingsModal({
                     value={pbHours}
                     onChange={(e) => setPbHours(parseInt(e.target.value) || 0)}
                     placeholder="HH"
-                    className="bg-[#121215] border border-[#27272A] rounded-lg px-2 py-2 text-center text-white focus:outline-none focus:border-orange-500/50"
+                    className="bg-[#111114] border border-white/10 rounded-lg px-2 py-2 text-center text-white focus:outline-none focus:border-orange-500/50"
                   />
                   <input
                     type="number"
@@ -267,7 +267,7 @@ export function AthleteSettingsModal({
                     value={pbMinutes}
                     onChange={(e) => setPbMinutes(parseInt(e.target.value) || 0)}
                     placeholder="MM"
-                    className="bg-[#121215] border border-[#27272A] rounded-lg px-2 py-2 text-center text-white focus:outline-none focus:border-orange-500/50"
+                    className="bg-[#111114] border border-white/10 rounded-lg px-2 py-2 text-center text-white focus:outline-none focus:border-orange-500/50"
                   />
                   <input
                     type="number"
@@ -276,7 +276,7 @@ export function AthleteSettingsModal({
                     value={pbSeconds}
                     onChange={(e) => setPbSeconds(parseInt(e.target.value) || 0)}
                     placeholder="SS"
-                    className="bg-[#121215] border border-[#27272A] rounded-lg px-2 py-2 text-center text-white focus:outline-none focus:border-orange-500/50"
+                    className="bg-[#111114] border border-white/10 rounded-lg px-2 py-2 text-center text-white focus:outline-none focus:border-orange-500/50"
                   />
                 </div>
               </div>
@@ -287,14 +287,14 @@ export function AthleteSettingsModal({
                   type="date"
                   value={targetRaceDate}
                   onChange={(e) => setTargetRaceDate(e.target.value)}
-                  className="w-full bg-[#121215] border border-[#27272A] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500/50"
+                  className="w-full bg-[#111114] border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500/50"
                 />
               </div>
             </div>
           </div>
 
           {/* Physiological Benchmarks */}
-          <div className="p-4 rounded-xl bg-[#18181B]/70 border border-[#27272A] space-y-3">
+          <div className="p-4 rounded-xl bg-zinc-900/70 border border-white/10 space-y-3">
             <div className="flex items-center gap-2 text-zinc-300 font-bold uppercase tracking-wider">
               <Heart className="w-4 h-4 text-emerald-400" /> {t.settings.biometricsTitle}
             </div>
@@ -307,7 +307,7 @@ export function AthleteSettingsModal({
                   value={thresholdHr}
                   onChange={(e) => setThresholdHr(e.target.value)}
                   placeholder="e.g. 173"
-                  className="w-full bg-[#121215] border border-[#27272A] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#111114] border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50"
                 />
               </div>
 
@@ -318,7 +318,7 @@ export function AthleteSettingsModal({
                   value={maxHr}
                   onChange={(e) => setMaxHr(e.target.value)}
                   placeholder="e.g. 190"
-                  className="w-full bg-[#121215] border border-[#27272A] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#111114] border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50"
                 />
               </div>
 
@@ -327,7 +327,7 @@ export function AthleteSettingsModal({
                 <select
                   value={trainingPhase}
                   onChange={(e) => setTrainingPhase(e.target.value)}
-                  className="w-full bg-[#121215] border border-[#27272A] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#111114] border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50"
                 >
                   <option value="auto">{t.settings.phaseAuto}</option>
                   <option value="Recovery">{t.settings.phaseRecovery}</option>
@@ -340,7 +340,7 @@ export function AthleteSettingsModal({
           </div>
 
           {/* Discord Webhook & Public Visibility */}
-          <div className="p-4 rounded-xl bg-[#18181B]/70 border border-[#27272A] space-y-3">
+          <div className="p-4 rounded-xl bg-zinc-900/70 border border-white/10 space-y-3">
             <div className="flex items-center gap-2 text-zinc-300 font-bold uppercase tracking-wider">
               <ShieldCheck className="w-4 h-4 text-blue-400" /> {t.settings.integrationsTitle}
             </div>
@@ -373,7 +373,7 @@ export function AthleteSettingsModal({
                     ? t.settings.discordKeepPlaceholder
                     : "https://discord.com/api/webhooks/..."
                 }
-                className="w-full bg-[#121215] border border-[#27272A] rounded-lg px-3 py-2 text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500/50"
+                className="w-full bg-[#111114] border border-white/10 rounded-lg px-3 py-2 text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500/50"
               />
               <span className="text-[10px] text-zinc-600 block mt-0.5">
                 {t.settings.discordHint}
@@ -384,7 +384,7 @@ export function AthleteSettingsModal({
               <div>
                 <label className="text-zinc-500 block mb-1">{t.settings.publicUsername}</label>
                 <div className="flex items-center">
-                  <span className="text-zinc-600 bg-zinc-900 px-2.5 py-2 border border-r-0 border-[#27272A] rounded-l-lg">
+                  <span className="text-zinc-600 bg-zinc-900 px-2.5 py-2 border border-r-0 border-white/10 rounded-l-lg">
                     /u/
                   </span>
                   <input
@@ -392,7 +392,7 @@ export function AthleteSettingsModal({
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="my-handle"
-                    className="w-full bg-[#121215] border border-[#27272A] rounded-r-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500/50"
+                    className="w-full bg-[#111114] border border-white/10 rounded-r-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500/50"
                   />
                 </div>
               </div>
@@ -416,12 +416,12 @@ export function AthleteSettingsModal({
         </form>
 
         {/* Sticky Footer */}
-        <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:gap-3 p-4 sm:p-5 border-t border-[#27272A] bg-[#121215] shrink-0 text-xs font-sans">
+        <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:gap-3 p-4 sm:p-5 border-t border-white/10 bg-[#111114] shrink-0 text-xs font-sans">
           <button
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="flex-1 py-2.5 rounded-xl border border-[#27272A] text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="flex-1 py-2.5 rounded-xl border border-white/10 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
           >
             {t.settings.cancel}
           </button>

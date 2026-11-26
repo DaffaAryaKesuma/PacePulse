@@ -117,18 +117,18 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-slate-100 selection:bg-[#C8F902]/25 selection:text-[#C8F902]">
+    <div className="min-h-screen bg-[#09090B] text-slate-100 selection:bg-emerald-500/25 selection:text-emerald-400">
       {/* Clean Top Navbar */}
-      <header className="border-b border-[#1E293B] bg-[#0B0F17]/90 backdrop-blur-md sticky top-0 z-40">
+      <header className="border-b border-white/10 bg-[#09090B]/90 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <img
               src="/logo.jpg"
               alt="PacePulse"
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover border border-[#C8F902]/40 shadow-md shadow-[#C8F902]/10 shrink-0"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover border border-white/10 shadow-md shadow-none shrink-0"
             />
-            <span className="font-display italic text-lg sm:text-xl font-extrabold tracking-wider text-white">
-              PACE<span className="text-[#C8F902]">PULSE</span>
+            <span className="text-lg sm:text-xl font-extrabold tracking-wider text-white">
+              PACE<span className="text-emerald-400">PULSE</span>
             </span>
           </div>
 
@@ -138,7 +138,7 @@ export default function LandingPage() {
             {currentUser ? (
               <Link
                 href="/dashboard"
-                className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-[#C8F902] hover:bg-[#d8ff3b] text-[#0B0F17] font-bold transition-all shadow-lg shadow-[#C8F902]/20 whitespace-nowrap"
+                className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold transition-all shadow-lg shadow-none whitespace-nowrap"
               >
                 <span>{t.nav.myDashboard}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -146,7 +146,7 @@ export default function LandingPage() {
             ) : (
               <a
                 href="/api/auth/strava"
-                className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-[#C8F902] hover:bg-[#d8ff3b] text-[#0B0F17] font-bold transition-all shadow-lg shadow-[#C8F902]/20 whitespace-nowrap"
+                className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold transition-all shadow-lg shadow-none whitespace-nowrap"
               >
                 <Zap className="w-3.5 h-3.5 shrink-0" />
                 <span className="sm:hidden">{t.nav.connectStrava}</span>
@@ -158,7 +158,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section with Running Track Lanes SVG */}
-      <section className="relative overflow-hidden py-12 sm:py-20 border-b border-[#1E293B] bg-[#0B0F17]">
+      <section className="relative overflow-hidden py-12 sm:py-20 border-b border-white/10 bg-[#09090B]">
         <svg
           aria-hidden="true"
           viewBox="0 0 1200 400"
@@ -173,12 +173,12 @@ export default function LandingPage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] sm:w-150 h-55 sm:h-75 bg-linear-to-tr from-[#C8F902]/12 via-[#FF5A1F]/10 to-transparent rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-4xl mx-auto px-4 text-center space-y-5 sm:space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#131A26] border border-[#1E293B] text-[10px] sm:text-xs font-semibold text-slate-300 max-w-full">
-            <span className="w-2 h-2 rounded-full bg-[#C8F902] animate-pulse shrink-0" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#111114] border border-white/10 text-[10px] sm:text-xs font-semibold text-slate-300 max-w-full">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
             <span className="truncate">{t.landing.heroPill}</span>
           </div>
 
-          <h1 className="font-display italic text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-[1.05]">
+          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-[1.05]">
             {t.landing.heroTitle1}{" "}
             <br className="hidden sm:block" />
             <span className="text-transparent bg-clip-text bg-linear-to-r from-[#C8F902] via-[#38BDF8] to-[#FF5A1F]">
@@ -193,7 +193,7 @@ export default function LandingPage() {
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <a
               href="/api/auth/strava"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#C8F902] hover:bg-[#d8ff3b] text-[#0B0F17] font-extrabold text-sm transition-all shadow-xl shadow-[#C8F902]/20"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-sm transition-all shadow-xl shadow-none"
             >
               <Zap className="w-4 h-4" />
               <span>{t.landing.ctaConnect}</span>
@@ -201,7 +201,7 @@ export default function LandingPage() {
 
             <Link
               href={`/u/${showcaseUsername}`}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#131A26] border border-[#1E293B] text-slate-200 hover:text-white hover:border-[#C8F902]/50 text-sm font-semibold transition-all"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#111114] border border-white/10 text-slate-200 hover:text-white hover:border-white/20 text-sm font-semibold transition-all"
             >
               <span>{t.landing.ctaExplore}</span>
               <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -211,10 +211,10 @@ export default function LandingPage() {
       </section>
 
       {/* Core Features Grid (4 Cards) */}
-      <section className="py-12 sm:py-16 border-b border-[#1E293B] bg-[#0B0F17]">
+      <section className="py-12 sm:py-16 border-b border-white/10 bg-[#09090B]">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 space-y-8">
           <div className="text-center space-y-2">
-            <h2 className="font-display italic text-2xl sm:text-3xl font-extrabold text-white uppercase tracking-wide">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white uppercase tracking-wide">
               {t.landing.featuresTitle}
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto">
@@ -228,7 +228,7 @@ export default function LandingPage() {
               return (
                 <div
                   key={feat.title}
-                  className="bg-[#131A26] border border-[#1E293B] rounded-2xl p-5 space-y-3 hover:border-zinc-600 transition-colors"
+                  className="bg-[#111114] border border-white/10 rounded-2xl p-5 space-y-3 hover:border-zinc-600 transition-colors"
                 >
                   <div className={`w-9 h-9 rounded-xl border flex items-center justify-center ${feat.accent}`}>
                     <Icon className="w-4 h-4" />
@@ -249,7 +249,7 @@ export default function LandingPage() {
       {/* Live Telemetry Preview (Max 3 Latest Activities) */}
       <section className="py-12 sm:py-16">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#1E293B]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
             <div>
               <div className="inline-flex items-center gap-1.5 text-xs font-sans text-orange-400 font-bold uppercase tracking-wider mb-1">
                 <Sparkles className="w-3.5 h-3.5" /> {t.landing.showcaseBadge}
@@ -265,7 +265,7 @@ export default function LandingPage() {
 
           {loading ? (
             <div className="py-12 flex items-center justify-center">
-              <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#131A26] border border-[#1E293B] text-zinc-400 text-xs font-sans">
+              <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#111114] border border-white/10 text-zinc-400 text-xs font-sans">
                 <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
                 <span>{t.landing.loadingShowcase}</span>
               </div>
@@ -307,7 +307,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[#1E293B] py-6 sm:py-8 bg-[#0A0A0D]">
+      <footer className="border-t border-white/10 py-6 sm:py-8 bg-[#0A0A0D]">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-xs text-zinc-600 font-sans text-center sm:text-left">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />

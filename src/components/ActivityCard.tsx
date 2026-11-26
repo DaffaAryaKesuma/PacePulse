@@ -40,20 +40,9 @@ interface ActivityCardProps {
 }
 
 function PhaseTag({ phase }: { phase: string }) {
-  const styles: Record<string, string> = {
-    Recovery: "bg-blue-500/10 text-blue-400 border-blue-500/30",
-    Base: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
-    Build: "bg-orange-500/10 text-orange-400 border-orange-500/30",
-    Peak: "bg-red-500/10 text-red-400 border-red-500/30",
-    Race: "bg-red-500/10 text-red-400 border-red-500/30",
-  };
   return (
-    <span
-      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-sans font-bold uppercase tracking-wider border ${
-        styles[phase] ?? styles.Base
-      }`}
-    >
-      <span className="w-1.5 h-1.5 rounded-full bg-current" />
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium uppercase tracking-wider bg-zinc-800/80 text-zinc-200 border border-white/10">
+      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
       {phase} Phase
     </span>
   );
@@ -176,9 +165,7 @@ export function ActivityCard({
     activity.trainingPhase === "Race" ||
     (activity.averageSpeed > 0 && 1000 / activity.averageSpeed < 290); // < 4:50/km
   const shoeName = activity.gearName || (isSpeedSession ? "Magic Speed 4" : "Novablast 5");
-  const shoeTagColor = isSpeedSession
-    ? "bg-orange-500/10 text-orange-400 border-orange-500/20"
-    : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+  const shoeTagColor = "bg-zinc-800/80 text-zinc-200 border-white/10";
 
   const runAnalysis = useCallback(async (expandOnResult: boolean) => {
     if (reanalyzing) return;
@@ -336,34 +323,34 @@ export function ActivityCard({
   })();
 
   return (
-    <div className="relative overflow-hidden bg-[#131A26] border border-[#1E293B] rounded-2xl transition-all duration-300 hover:border-[#C8F902]/40 shadow-xl">
+    <div className="bg-[#111114] border border-white/10 rounded-xl transition-colors hover:border-white/20">
       {/* Top Header */}
-      <div className="p-4 sm:p-6">
+      <div className="p-5">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1.5">
+            <div className="flex flex-wrap items-center gap-2 mb-1.5">
               <PhaseTag phase={activity.trainingPhase} />
               <span
-                className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${shoeTagColor}`}
+                className={`px-2 py-0.5 rounded-md text-[11px] font-medium border ${shoeTagColor}`}
               >
-                👟 {shoeName}
+                {shoeName}
               </span>
-              <span className="text-[11px] sm:text-xs text-slate-400">
+              <span className="text-xs text-zinc-400">
                 {formatDate(activity.startDate)}
               </span>
             </div>
-            <h3 className="text-base sm:text-lg font-bold text-white wrap-break-word">
+            <h3 className="text-sm font-semibold text-zinc-100 wrap-break-word">
               {activity.name}
             </h3>
           </div>
 
           <div className="flex items-center sm:items-end justify-between sm:justify-start sm:flex-col gap-2 shrink-0">
             <div className="text-left sm:text-right">
-              <div className="font-display italic text-3xl sm:text-4xl font-extrabold text-[#C8F902] tracking-tight tabular-nums leading-none">
+              <div className="text-2xl font-bold tracking-tight text-emerald-400 tabular-nums leading-none">
                 {distanceKm.toFixed(2)}
-                <span className="font-sans not-italic text-xs sm:text-sm font-semibold text-slate-400 ml-1">km</span>
+                <span className="text-xs font-medium text-zinc-400 ml-1">km</span>
               </div>
-              <div className="text-[11px] sm:text-xs text-slate-400 tabular-nums mt-1">
+              <div className="text-xs text-zinc-400 tabular-nums mt-1">
                 {t.activity.movingTime} {duration}
               </div>
             </div>
@@ -373,78 +360,62 @@ export function ActivityCard({
                 onClick={handleReanalyze}
                 disabled={reanalyzing}
                 title="Re-run sports science evaluation with latest athlete benchmarks"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#0B0F17] border border-[#1E293B] text-slate-300 hover:text-white hover:border-[#C8F902]/60 text-[11px] font-semibold transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-800/80 border border-white/10 text-zinc-300 hover:text-zinc-100 hover:border-white/20 text-xs font-medium transition-colors disabled:opacity-50"
               >
-                <RefreshCw className={`w-3 h-3 ${reanalyzing ? "animate-spin text-[#C8F902]" : ""}`} />
+                <RefreshCw className={`w-3 h-3 ${reanalyzing ? "animate-spin text-emerald-400" : ""}`} />
                 <span>{reanalyzing ? t.activity.analyzing : t.activity.reAnalyze}</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Telemetry Metrics Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 py-3 border-y border-[#1E293B]">
-          <div className="bg-[#0B0F17]/70 p-2.5 sm:p-3 rounded-xl border border-[#1E293B] flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#C8F902]/10 border border-[#C8F902]/25 flex items-center justify-center shrink-0">
-              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C8F902]" />
+        {/* Telemetry Metrics Strip (flat, hairline divided, no nested cards) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-3.5 border-y border-white/5">
+          <div className="min-w-0">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 truncate flex items-center gap-1.5">
+              <Clock className="w-3 h-3 text-emerald-500 shrink-0" />
+              {t.activity.avgPace}
             </div>
-            <div className="min-w-0">
-              <div className="text-[9px] sm:text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate">
-                {t.activity.avgPace}
-              </div>
-              <div className="text-sm sm:text-base font-extrabold text-white tabular-nums">
-                {avgPace}
-                <span className="text-[11px] sm:text-xs font-normal text-slate-400">/km</span>
-              </div>
+            <div className="text-base font-bold text-zinc-100 tabular-nums mt-0.5">
+              {avgPace}
+              <span className="text-xs font-normal text-zinc-400">/km</span>
             </div>
           </div>
 
-          <div className="bg-[#0B0F17]/70 p-2.5 sm:p-3 rounded-xl border border-[#1E293B] flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#FF5A1F]/10 border border-[#FF5A1F]/25 flex items-center justify-center shrink-0">
-              <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FF5A1F]" />
+          <div className="min-w-0">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 truncate flex items-center gap-1.5">
+              <Heart className="w-3 h-3 text-zinc-400 shrink-0" />
+              {t.activity.avgHr}
             </div>
-            <div className="min-w-0">
-              <div className="text-[9px] sm:text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate">
-                {t.activity.avgHr}
-              </div>
-              <div className="text-sm sm:text-base font-extrabold text-white tabular-nums">
-                {activity.averageHeartrate
-                  ? Math.round(activity.averageHeartrate)
-                  : "—"}
-                <span className="text-[11px] sm:text-xs font-normal text-slate-400"> bpm</span>
-              </div>
+            <div className="text-base font-bold text-zinc-100 tabular-nums mt-0.5">
+              {activity.averageHeartrate
+                ? Math.round(activity.averageHeartrate)
+                : "—"}
+              <span className="text-xs font-normal text-zinc-400"> bpm</span>
             </div>
           </div>
 
-          <div className="bg-[#0B0F17]/70 p-2.5 sm:p-3 rounded-xl border border-[#1E293B] flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#38BDF8]/10 border border-[#38BDF8]/25 flex items-center justify-center shrink-0">
-              <Footprints className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#38BDF8]" />
+          <div className="min-w-0">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 truncate flex items-center gap-1.5">
+              <Footprints className="w-3 h-3 text-zinc-400 shrink-0" />
+              {t.activity.cadence}
             </div>
-            <div className="min-w-0">
-              <div className="text-[9px] sm:text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate">
-                {t.activity.cadence}
-              </div>
-              <div className="text-sm sm:text-base font-extrabold text-white tabular-nums">
-                {cadenceSpm ?? "—"}
-                <span className="text-[11px] sm:text-xs font-normal text-slate-400"> spm</span>
-              </div>
+            <div className="text-base font-bold text-zinc-100 tabular-nums mt-0.5">
+              {cadenceSpm ?? "—"}
+              <span className="text-xs font-normal text-zinc-400"> spm</span>
             </div>
           </div>
 
-          <div className="bg-[#0B0F17]/70 p-2.5 sm:p-3 rounded-xl border border-[#1E293B] flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-              <Mountain className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400" />
+          <div className="min-w-0">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 truncate flex items-center gap-1.5">
+              <Mountain className="w-3 h-3 text-zinc-400 shrink-0" />
+              {t.activity.elevationGain}
             </div>
-            <div className="min-w-0">
-              <div className="text-[9px] sm:text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate">
-                {t.activity.elevationGain}
-              </div>
-              <div className="text-sm sm:text-base font-extrabold text-white tabular-nums">
-                {activity.totalElevationGain !== null
-                  ? activity.totalElevationGain.toFixed(0)
-                  : "—"}
-                <span className="text-[11px] sm:text-xs font-normal text-slate-400"> m</span>
-              </div>
+            <div className="text-base font-bold text-zinc-100 tabular-nums mt-0.5">
+              {activity.totalElevationGain !== null
+                ? activity.totalElevationGain.toFixed(0)
+                : "—"}
+              <span className="text-xs font-normal text-zinc-400"> m</span>
             </div>
           </div>
         </div>
@@ -452,13 +423,10 @@ export function ActivityCard({
         {/* 5-Zone HR Distribution Mini Bar */}
         {hrZoneStats && (
           <div className="mt-3 flex items-center gap-3">
-            <span
-              className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#0B0F17] border border-[#1E293B] shrink-0"
-              style={{ color: hrZoneStats.dominantColor }}
-            >
+            <span className="text-[11px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md bg-zinc-800/80 border border-white/10 text-zinc-200 shrink-0">
               {hrZoneStats.dominantLabel}
             </span>
-            <div className="flex-1 h-2 rounded-full bg-[#0B0F17] border border-[#1E293B] overflow-hidden flex gap-0.5 p-0.5">
+            <div className="flex-1 h-1.5 rounded-full bg-zinc-800 overflow-hidden flex gap-0.5">
               {hrZoneStats.pcts.map((pct, idx) =>
                 pct > 0 ? (
                   <div
@@ -473,7 +441,7 @@ export function ActivityCard({
                 ) : null
               )}
             </div>
-            <span className="hidden sm:inline text-[10px] text-slate-400 tabular-nums shrink-0">
+            <span className="hidden sm:inline text-[11px] text-zinc-400 tabular-nums shrink-0">
               Z1–Z5 HR
             </span>
           </div>
@@ -630,31 +598,31 @@ export function ActivityCard({
           </button>
 
           {expanded && (
-            <div className="p-4 sm:p-6 border-t border-[#27272A] bg-[#0E0E11] space-y-5 sm:space-y-6">
+            <div className="p-5 border-t border-white/5 space-y-6">
               {/* Split Kilometer Telemetry Table */}
               {activity.splitsJson && Array.isArray(activity.splitsJson) && activity.splitsJson.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-sans flex items-center gap-2">
-                      <Award className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                    <h4 className="text-sm font-semibold text-zinc-200 flex items-center gap-2">
+                      <Award className="w-4 h-4 text-emerald-500 shrink-0" />
                       {t.activity.splitTelemetry}
                     </h4>
-                    <span className="text-[10px] text-zinc-600 font-sans">
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">
                       {t.activity.metricSplits}
                     </span>
                   </div>
 
-                  <div className="overflow-x-auto rounded-xl border border-[#1E293B] bg-[#131A26]">
-                    <table className="w-full text-xs font-sans tabular-nums font-semibold whitespace-nowrap">
+                  <div className="overflow-x-auto border-y border-white/10">
+                    <table className="w-full text-xs font-sans tabular-nums whitespace-nowrap">
                       <thead>
-                        <tr className="border-b border-[#1E293B] bg-[#0B0F17] text-slate-400 text-[11px] font-bold">
-                          <th className="text-left py-2 px-2.5 sm:px-3">{t.activity.km}</th>
-                          <th className="text-left py-2 px-2.5 sm:px-3">{t.activity.pace}</th>
-                          <th className="text-left py-2 px-2.5 sm:px-3">{t.activity.heartRate}</th>
-                          <th className="text-left py-2 px-2.5 sm:px-3">{t.activity.elevation}</th>
+                        <tr className="border-b border-white/10 text-zinc-400 text-[11px] uppercase tracking-wider">
+                          <th className="text-left py-2 px-2.5 font-medium">{t.activity.km}</th>
+                          <th className="text-left py-2 px-2.5 font-medium">{t.activity.pace}</th>
+                          <th className="text-left py-2 px-2.5 font-medium">{t.activity.heartRate}</th>
+                          <th className="text-left py-2 px-2.5 font-medium">{t.activity.elevation}</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-white/5">
                         {(activity.splitsJson as Array<{
                           split: number;
                           average_speed: number;
@@ -665,33 +633,20 @@ export function ActivityCard({
                           return (
                             <tr
                               key={split.split}
-                              className="border-b border-[#1E293B]/60 hover:bg-[#0B0F17]/60 transition-colors"
+                              className="hover:bg-white/[0.02] transition-colors"
                             >
-                              <td className="py-2 px-2.5 sm:px-3 text-slate-300 font-semibold">
+                              <td className="py-2 px-2.5 text-zinc-400 font-medium">
                                 #{split.split}
                               </td>
-                              <td className="py-2 px-2.5 sm:px-3 text-[#C8F902] font-semibold">
+                              <td className="py-2 px-2.5 text-emerald-400 font-semibold">
                                 {splitPace}/km
                               </td>
-                              <td
-                                className={`py-2 px-2.5 sm:px-3 font-semibold ${
-                                  split.average_heartrate &&
-                                  split.average_heartrate >= 173
-                                    ? "text-[#FF5A1F]"
-                                    : "text-slate-200"
-                                }`}
-                              >
+                              <td className="py-2 px-2.5 text-zinc-200 font-medium">
                                 {split.average_heartrate
                                   ? `${Math.round(split.average_heartrate)} bpm`
                                   : "—"}
                               </td>
-                              <td
-                                className={`py-2 px-2.5 sm:px-3 font-semibold ${
-                                  (split.elevation_difference ?? 0) > 0
-                                    ? "text-[#FF5A1F]"
-                                    : "text-[#38BDF8]"
-                                }`}
-                              >
+                              <td className="py-2 px-2.5 text-zinc-400">
                                 {split.elevation_difference !== undefined
                                   ? `${split.elevation_difference > 0 ? "+" : ""}${split.elevation_difference.toFixed(0)}m`
                                   : "—"}
@@ -706,33 +661,33 @@ export function ActivityCard({
               )}
 
               {/* AI Coach Detailed Feedback */}
-              <div className="bg-[#131A26] rounded-xl p-4 sm:p-5 border border-[#1E293B]">
+              <div className="pt-2 border-t border-white/5">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider font-sans flex items-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-[#C8F902] shrink-0" />
+                  <h4 className="text-sm font-semibold text-zinc-200 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
                     {t.activity.diagnosisTitle}
                   </h4>
                   <div className="flex items-center gap-2 shrink-0">
                     {canReanalyze && (
                       <Link
                         href={`/coach?activityId=${activity.id}`}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#C8F902] hover:bg-[#d8ff3b] text-[#0B0F17] text-[11px] font-bold transition-all shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-semibold transition-colors"
                       >
-                        <MessageSquare className="w-3 h-3 shrink-0" />
+                        <MessageSquare className="w-3.5 h-3.5 shrink-0" />
                         <span>{t.activity.discussWithCoach}</span>
                       </Link>
                     )}
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-sans bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
-                      <Bot className="w-3 h-3" /> Gemini 3.8 Flash
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-800/80 text-zinc-200 border border-white/10 shrink-0">
+                      <Bot className="w-3 h-3" /> Gemini 2.5 Flash
                     </div>
                   </div>
                 </div>
                 {reanalyzeError && (
-                  <div className="mb-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-sans wrap-break-word">
+                  <div className="mb-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-xs wrap-break-word">
                     <strong>{t.activity.reanalyzeError}</strong> {reanalyzeError}
                   </div>
                 )}
-                <div className="text-xs text-zinc-300 leading-relaxed font-sans space-y-1 wrap-break-word">
+                <div className="text-sm leading-relaxed text-zinc-300 space-y-1.5 wrap-break-word">
                   {translating && (
                     <div className="text-[11px] text-emerald-400 animate-pulse mb-2">
                       {language === "id" ? "Menerjemahkan analisis ke Bahasa Indonesia..." : "Translating analysis to English..."}

@@ -205,35 +205,35 @@ export default function PersonalDashboard() {
       : null;
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-white selection:bg-emerald-500/30 selection:text-emerald-400">
+    <div className="min-h-screen bg-[#09090B] text-zinc-100 selection:bg-emerald-500/20 selection:text-emerald-400">
       {/* Clean Page Topbar: Connection Status + Page Breadcrumb */}
-      <header className="border-b border-[#1E293B] bg-[#0B0F17]/80 backdrop-blur-md sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-sans">
+      <header className="border-b border-white/10 bg-[#09090B]/90 backdrop-blur-md sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <span className="flex items-center gap-1.5 text-emerald-400 font-bold tracking-wider truncate">
-              <Radio className="w-3.5 h-3.5 animate-pulse shrink-0" />
+            <span className="flex items-center gap-1.5 text-emerald-400 font-semibold tracking-wide truncate">
+              <Radio className="w-3.5 h-3.5 shrink-0" />
               <span className="hidden sm:inline">{t.nav.stravaConnectedFull}</span>
               <span className="sm:hidden">{t.nav.stravaConnected}</span>
             </span>
             <span className="text-zinc-600">•</span>
-            <span className="text-white font-bold truncate">{t.nav.overview}</span>
+            <span className="text-zinc-100 font-semibold truncate">{t.nav.overview}</span>
           </div>
 
           <span className="hidden md:inline text-zinc-400 truncate">
-            {t.nav.welcome} <strong className="text-white">{currentUser?.fullName}</strong>
+            {t.nav.welcome} <strong className="text-zinc-100">{currentUser?.fullName}</strong>
           </span>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
+      <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
         {/* Sync Toast Feedback */}
         {syncMessage && (
-          <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-sans flex items-center justify-between gap-3 shadow-xl">
+          <div className="p-4 rounded-xl bg-[#111114] border border-white/10 text-emerald-400 text-xs flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-4 h-4 shrink-0" />
               <span>{syncMessage}</span>
             </div>
-            <button onClick={() => setSyncMessage(null)} className="text-emerald-400/70 hover:text-emerald-400">
+            <button onClick={() => setSyncMessage(null)} className="text-zinc-400 hover:text-zinc-200">
               {t.dashboard.dismiss}
             </button>
           </div>
@@ -241,16 +241,16 @@ export default function PersonalDashboard() {
 
         {/* Onboarding Banner when User Goal is Unset */}
         {currentUser && !currentUser.goalDistance && (
-          <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-linear-to-r from-orange-500/15 via-amber-500/10 to-emerald-500/10 border border-orange-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+          <div className="p-5 rounded-xl bg-[#111114] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center shrink-0 mt-0.5">
-                <Target className="w-4 h-4 text-orange-400" />
+              <div className="w-9 h-9 rounded-lg bg-zinc-800/80 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                <Target className="w-4 h-4 text-emerald-500" />
               </div>
               <div>
-                <h2 className="text-sm font-bold font-sans text-white">
+                <h2 className="text-sm font-semibold text-zinc-200">
                   {t.onboarding.bannerTitle}
                 </h2>
-                <p className="text-xs font-sans text-zinc-300 mt-1">
+                <p className="text-xs text-zinc-400 mt-1">
                   {t.onboarding.bannerSubtitle}
                 </p>
               </div>
@@ -258,7 +258,7 @@ export default function PersonalDashboard() {
             <button
               type="button"
               onClick={() => window.dispatchEvent(new CustomEvent("pacepulse:open-settings"))}
-              className="px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-zinc-950 font-sans font-bold text-xs transition-all shrink-0 shadow-lg shadow-orange-500/20"
+              className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-xs transition-colors shrink-0"
             >
               {t.onboarding.ctaButton}
             </button>
@@ -278,8 +278,8 @@ export default function PersonalDashboard() {
         {/* Loading state */}
         {loading && (
           <div className="flex items-center justify-center py-16">
-            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#131A26] border border-[#1E293B] text-zinc-400 text-xs font-sans">
-              <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+            <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-[#111114] border border-white/10 text-zinc-400 text-xs">
+              <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />
               <span>{t.dashboard.loadingTelemetry}</span>
             </div>
           </div>
@@ -287,12 +287,12 @@ export default function PersonalDashboard() {
 
         {/* Error notification */}
         {error && !loading && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 flex items-start justify-between gap-3 text-xs font-sans">
+          <div className="bg-[#111114] border border-red-500/20 rounded-xl p-4 flex items-start justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 text-red-400">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
-            <button onClick={() => fetchData()} className="text-red-400 hover:text-red-300 underline">
+            <button onClick={() => fetchData()} className="text-zinc-300 hover:text-zinc-100 underline">
               {t.dashboard.retry}
             </button>
           </div>
@@ -301,7 +301,7 @@ export default function PersonalDashboard() {
         {!loading && data && (
           <>
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <KpiCard
                 title={t.kpi.weeklyMileage}
                 value={data.weeklySummary.totalDistanceKm.toFixed(1)}
@@ -309,7 +309,7 @@ export default function PersonalDashboard() {
                 subtitle={`${data.weeklySummary.sessionCount} ${t.kpi.sessionsLoggedWeek}`}
                 trend="up"
                 trendValue="+10% Rule"
-                icon={<MapPin className="w-5 h-5" />}
+                icon={<MapPin className="w-4 h-4" />}
                 accentColor="emerald"
               />
               <KpiCard
@@ -319,7 +319,7 @@ export default function PersonalDashboard() {
                 subtitle={t.kpi.pfitzingerIndex}
                 trend="up"
                 trendValue="Decoupling <5%"
-                icon={<Activity className="w-5 h-5" />}
+                icon={<Activity className="w-4 h-4" />}
                 accentColor="blue"
               />
               <KpiCard
@@ -329,7 +329,7 @@ export default function PersonalDashboard() {
                 subtitle={t.kpi.analyzedByAi}
                 trend="neutral"
                 trendValue="Auto Sync"
-                icon={<Heart className="w-5 h-5" />}
+                icon={<Heart className="w-4 h-4" />}
                 accentColor="orange"
               />
               <KpiCard
@@ -338,7 +338,7 @@ export default function PersonalDashboard() {
                 subtitle={t.kpi.vdotProjection}
                 trend="up"
                 trendValue={t.kpi.onTrack}
-                icon={<Target className="w-5 h-5" />}
+                icon={<Target className="w-4 h-4" />}
                 accentColor="purple"
               />
             </div>
@@ -350,11 +350,11 @@ export default function PersonalDashboard() {
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-base sm:text-lg font-bold text-white font-sans uppercase tracking-wider flex items-center gap-2">
-                    <SlidersHorizontal className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <h2 className="text-sm font-semibold text-zinc-200 flex items-center gap-2">
+                    <SlidersHorizontal className="w-4 h-4 text-emerald-500 shrink-0" />
                     <span>{t.dashboard.feedTitle}</span>
                   </h2>
-                  <p className="text-xs text-zinc-500 font-sans">
+                  <p className="text-xs text-zinc-400">
                     {t.dashboard.feedSubtitle}
                   </p>
                 </div>
@@ -362,31 +362,31 @@ export default function PersonalDashboard() {
                 {currentUser?.username && (
                   <button
                     onClick={handleCopyPublic}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B0F17] border border-[#1E293B] text-zinc-400 hover:text-white text-xs font-sans self-start sm:self-auto"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#111114] border border-white/10 text-zinc-300 hover:text-zinc-100 hover:border-white/20 text-xs self-start sm:self-auto"
                   >
-                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
+                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5 text-zinc-400" />}
                     <span>{copied ? t.dashboard.linkCopied : `${t.dashboard.publicProfile} (/u/${currentUser.username})`}</span>
                   </button>
                 )}
               </div>
 
               {data.activities.length === 0 ? (
-                <div className="bg-[#131A26] border border-[#1E293B] rounded-2xl p-6 sm:p-10 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto">
-                    <RefreshCw className="w-8 h-8 text-emerald-400" />
+                <div className="bg-[#111114] border border-white/10 rounded-xl p-6 sm:p-10 text-center space-y-4">
+                  <div className="w-12 h-12 rounded-xl bg-zinc-800/80 border border-white/10 flex items-center justify-center mx-auto">
+                    <RefreshCw className="w-6 h-6 text-emerald-500" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white font-sans">
+                    <h3 className="text-sm font-semibold text-zinc-200">
                       {t.dashboard.noRunsTitle}
                     </h3>
-                    <p className="text-xs text-zinc-500 font-sans max-w-md mx-auto mt-1">
+                    <p className="text-xs text-zinc-400 max-w-md mx-auto mt-1">
                       {t.dashboard.noRunsDesc}
                     </p>
                   </div>
                   <button
                     onClick={handleUserSync}
                     disabled={syncing}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-sans font-bold text-xs transition-all shadow-lg shadow-emerald-500/20"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-xs transition-colors"
                   >
                     <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
                     <span>{syncing ? t.nav.syncing : t.dashboard.sync10Runs}</span>
@@ -405,15 +405,15 @@ export default function PersonalDashboard() {
                   ))}
 
                   {data.activities.length > 3 && (
-                    <div className="pt-2 flex justify-center">
+                    <div className="pt-1 flex justify-center">
                       <Link
                         href="/dashboard/history"
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#131A26] border border-[#1E293B] hover:border-emerald-500/50 text-xs font-sans font-bold text-emerald-400 hover:text-emerald-300 transition-all"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#111114] border border-white/10 text-xs font-medium text-zinc-300 hover:text-zinc-100 hover:border-white/20 transition-colors"
                       >
                         <span>
                           {t.dashboard.viewAllHistory} ({t.dashboard.totalSuffix} {data.activities.length})
                         </span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <ArrowRight className="w-3.5 h-3.5 text-emerald-500" />
                       </Link>
                     </div>
                   )}
@@ -424,7 +424,7 @@ export default function PersonalDashboard() {
         )}
 
         {/* Footer */}
-        <footer className="mt-12 sm:mt-16 pt-6 border-t border-[#1E293B] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600 font-sans text-center sm:text-left">
+        <footer className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-500 text-center sm:text-left">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span>{t.dashboard.footerLeft}</span>

@@ -64,7 +64,7 @@ function renderInlineMarkdown(text: string): React.ReactNode[] {
   return parts.map((part, idx) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return (
-        <strong key={idx} className="text-white font-bold">
+        <strong key={idx} className="text-zinc-100 font-semibold">
           {part.slice(2, -2)}
         </strong>
       );
@@ -73,7 +73,7 @@ function renderInlineMarkdown(text: string): React.ReactNode[] {
       return (
         <code
           key={idx}
-          className="px-1.5 py-0.5 rounded bg-[#0B0F17] border border-[#1E293B] text-[#C8F902] text-[11px]"
+          className="px-1.5 py-0.5 rounded bg-zinc-800/80 border border-white/10 text-emerald-400 text-xs"
         >
           {part.slice(1, -1)}
         </code>
@@ -118,11 +118,11 @@ function MarkdownMessage({ content }: { content: string }) {
       nodes.push(
         <div
           key={`tbl-${i}`}
-          className="my-2 overflow-x-auto rounded-xl border border-[#1E293B] bg-[#0B0F17]"
+          className="my-2 overflow-x-auto rounded-xl border border-white/10 bg-[#09090B]"
         >
           <table className="w-full text-xs font-sans tabular-nums text-left">
             <thead>
-              <tr className="border-b border-[#1E293B] bg-[#131A26] text-slate-300 font-bold">
+              <tr className="border-b border-white/10 bg-zinc-900/70 text-zinc-300 font-semibold">
                 {headers.map((h, hi) => (
                   <th key={hi} className="py-2 px-3 whitespace-nowrap">
                     {renderInlineMarkdown(h)}
@@ -130,11 +130,11 @@ function MarkdownMessage({ content }: { content: string }) {
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-white/5">
               {dataRows.map((row, ri) => (
-                <tr key={ri} className="border-b border-[#1E293B]/60 last:border-b-0">
+                <tr key={ri}>
                   {row.map((cell, ci) => (
-                    <td key={ci} className="py-1.5 px-3 text-slate-200 whitespace-nowrap">
+                    <td key={ci} className="py-1.5 px-3 text-zinc-300 whitespace-nowrap">
                       {renderInlineMarkdown(cell)}
                     </td>
                   ))}
@@ -153,7 +153,7 @@ function MarkdownMessage({ content }: { content: string }) {
       nodes.push(
         <h4
           key={`h-${i}`}
-          className="text-sm font-extrabold text-[#C8F902] mt-3 mb-1 first:mt-0 tracking-wide"
+          className="text-sm font-semibold text-emerald-400 mt-3 mb-1 first:mt-0"
         >
           {renderInlineMarkdown(headingMatch[2])}
         </h4>
@@ -167,7 +167,7 @@ function MarkdownMessage({ content }: { content: string }) {
     if (bulletMatch) {
       nodes.push(
         <div key={`b-${i}`} className="flex items-start gap-2 pl-1">
-          <span className="text-[#C8F902] font-bold shrink-0">•</span>
+          <span className="text-emerald-500 font-bold shrink-0">•</span>
           <span>{renderInlineMarkdown(bulletMatch[1])}</span>
         </div>
       );
@@ -180,7 +180,7 @@ function MarkdownMessage({ content }: { content: string }) {
     if (numMatch) {
       nodes.push(
         <div key={`n-${i}`} className="flex items-start gap-2 pl-1">
-          <span className="text-[#38BDF8] font-bold tabular-nums shrink-0">{numMatch[1]}</span>
+          <span className="text-zinc-400 font-semibold tabular-nums shrink-0">{numMatch[1]}</span>
           <span>{renderInlineMarkdown(numMatch[2])}</span>
         </div>
       );
@@ -192,7 +192,7 @@ function MarkdownMessage({ content }: { content: string }) {
     i++;
   }
 
-  return <div className="space-y-1 text-xs sm:text-sm leading-relaxed text-slate-200">{nodes}</div>;
+  return <div className="space-y-1.5 text-sm leading-relaxed text-zinc-300">{nodes}</div>;
 }
 
 function CoachChatInner() {
@@ -452,16 +452,16 @@ function CoachChatInner() {
         ];
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-[#0E141F] border-r border-[#1E293B]">
-      <div className="p-4 border-b border-[#1E293B] flex items-center justify-between gap-2">
-        <Link href="/dashboard" className="flex items-center gap-2 text-slate-300 hover:text-white text-xs font-semibold">
-          <ArrowLeft className="w-4 h-4 text-[#C8F902]" />
+    <div className="flex flex-col h-full bg-[#09090B] border-r border-white/10">
+      <div className="p-4 border-b border-white/10 flex items-center justify-between gap-2">
+        <Link href="/dashboard" className="flex items-center gap-2 text-zinc-300 hover:text-zinc-100 text-xs font-medium">
+          <ArrowLeft className="w-4 h-4 text-emerald-500" />
           <span>{t.coachPage.backToDashboard}</span>
         </Link>
         <button
           type="button"
           onClick={() => setMobileSidebarOpen(false)}
-          className="lg:hidden p-1 text-slate-400 hover:text-white"
+          className="lg:hidden p-1 text-zinc-400 hover:text-zinc-100"
         >
           <X className="w-4 h-4" />
         </button>
@@ -471,20 +471,20 @@ function CoachChatInner() {
         <button
           type="button"
           onClick={handleNewConversation}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-[#C8F902] hover:bg-[#d8ff3b] text-[#0B0F17] font-bold text-xs transition-all shadow-md shadow-[#C8F902]/15"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-xs transition-colors"
         >
           <Plus className="w-4 h-4" />
           <span>{t.coachPage.newChat}</span>
         </button>
       </div>
 
-      <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+      <div className="px-3 pb-2 text-[11px] font-medium uppercase tracking-wider text-zinc-400">
         {t.coachPage.historyTitle}
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-1">
         {conversations.length === 0 ? (
-          <div className="px-3 py-6 text-center text-xs text-slate-500">
+          <div className="px-3 py-6 text-center text-xs text-zinc-500">
             {t.coachPage.noHistory}
           </div>
         ) : (
@@ -494,10 +494,10 @@ function CoachChatInner() {
               <div
                 key={conv.id}
                 onClick={() => handleSelectConversation(conv.id)}
-                className={`group flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl cursor-pointer border text-xs transition-all ${
+                className={`group flex items-center justify-between gap-2 px-3 py-2 rounded-lg cursor-pointer border text-xs transition-colors ${
                   active
-                    ? "bg-[#C8F902]/12 border-[#C8F902]/35 text-[#C8F902] font-semibold"
-                    : "border-transparent text-slate-300 hover:bg-[#131A26] hover:text-white"
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-semibold"
+                    : "border-transparent text-zinc-300 hover:bg-zinc-900/70 hover:text-zinc-100"
                 }`}
               >
                 <div className="flex items-center gap-2 min-w-0">
@@ -508,7 +508,7 @@ function CoachChatInner() {
                   type="button"
                   onClick={(e) => void handleDeleteConversation(conv.id, e)}
                   title={t.coachPage.deleteChat}
-                  className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-400 hover:text-red-400 transition-opacity shrink-0"
+                  className="opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-400 hover:text-red-400 transition-opacity shrink-0"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -518,15 +518,15 @@ function CoachChatInner() {
         )}
       </div>
 
-      <div className="p-3 border-t border-[#1E293B] flex items-center justify-between">
-        <span className="text-[11px] text-slate-400 font-semibold">PacePulse AI Coach</span>
+      <div className="p-3 border-t border-white/10 flex items-center justify-between">
+        <span className="text-xs text-zinc-400 font-medium">PacePulse AI Coach</span>
         <LanguageToggle />
       </div>
     </div>
   );
 
   return (
-    <div className="h-screen flex bg-[#0B0F17] text-slate-100 overflow-hidden font-sans">
+    <div className="h-screen flex bg-[#09090B] text-zinc-100 overflow-hidden font-sans">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block w-72 shrink-0 h-full">{sidebarContent}</aside>
 
@@ -544,31 +544,31 @@ function CoachChatInner() {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full">
         {/* Top Bar */}
-        <header className="border-b border-[#1E293B] bg-[#0E141F]/90 backdrop-blur-md px-4 py-3 flex items-center justify-between gap-3 shrink-0">
+        <header className="border-b border-white/10 bg-[#09090B]/95 backdrop-blur-md px-4 py-3 flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-1.5 rounded-lg bg-[#131A26] border border-[#1E293B] text-slate-300"
+              className="lg:hidden p-1.5 rounded-lg bg-[#111114] border border-white/10 text-zinc-300"
             >
               <Menu className="w-4 h-4" />
             </button>
-            <div className="w-8 h-8 rounded-xl bg-[#C8F902]/15 border border-[#C8F902]/40 flex items-center justify-center shrink-0">
-              <Bot className="w-4 h-4 text-[#C8F902]" />
+            <div className="w-8 h-8 rounded-lg bg-zinc-800/80 border border-white/10 flex items-center justify-center shrink-0">
+              <Bot className="w-4 h-4 text-emerald-500" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-display italic text-lg sm:text-xl font-extrabold text-white tracking-wide truncate">
+              <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-zinc-100 truncate">
                 {t.coachPage.title}
               </h1>
-              <p className="text-[11px] text-slate-400 truncate">
+              <p className="text-xs text-zinc-400 truncate">
                 {t.coachPage.subtitle}
               </p>
             </div>
           </div>
 
           {goalLabel && (
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#131A26] border border-[#1E293B] text-xs font-semibold text-[#C8F902] shrink-0">
-              <Sparkles className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800/80 border border-white/10 text-xs font-medium text-zinc-200 shrink-0">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
               {goalLabel}
             </span>
           )}
@@ -576,41 +576,41 @@ function CoachChatInner() {
 
         {/* Focused Activity Context Banner */}
         {focusedActivity && (
-          <div className="px-4 py-2.5 bg-[#131A26] border-b border-[#1E293B] flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
+          <div className="px-4 py-2.5 bg-[#111114] border-b border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
             <div className="flex items-center gap-2 min-w-0">
-              <Activity className="w-4 h-4 text-[#FF5A1F] shrink-0" />
-              <span className="font-bold text-white truncate">{focusedActivity.name}</span>
-              <span className="text-slate-400 tabular-nums shrink-0">
+              <Activity className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span className="font-semibold text-zinc-100 truncate">{focusedActivity.name}</span>
+              <span className="text-zinc-400 tabular-nums shrink-0">
                 {metersToKm(focusedActivity.distanceMeters)} km
                 {focusedActivity.averageSpeed ? ` • ${speedToPace(focusedActivity.averageSpeed)}/km` : ""}
                 {focusedActivity.averageHeartrate ? ` • ${Math.round(focusedActivity.averageHeartrate)} bpm` : ""}
               </span>
             </div>
-            <span className="px-2 py-0.5 rounded bg-[#FF5A1F]/10 border border-[#FF5A1F]/30 text-[#FF5A1F] text-[10px] font-bold uppercase">
+            <span className="px-2 py-0.5 rounded-md bg-zinc-800/80 border border-white/10 text-zinc-200 text-[11px] font-medium uppercase tracking-wider">
               {t.coachPage.focusedRunBadge}
             </span>
           </div>
         )}
 
-        {/* Messages Feed */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-5">
+        {/* Messages Feed (centered max-w-3xl for optimal reading) */}
+        <div className="flex-1 overflow-y-auto px-4 py-6">
           {loading ? (
             <div className="h-full flex items-center justify-center">
-              <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#131A26] border border-[#1E293B] text-xs text-slate-300">
-                <Loader2 className="w-4 h-4 animate-spin text-[#C8F902]" />
+              <div className="flex items-center gap-2.5 px-4 py-2 rounded-lg bg-[#111114] border border-white/10 text-xs text-zinc-300">
+                <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />
                 <span>{t.coachPage.loading}</span>
               </div>
             </div>
           ) : messages.length === 0 ? (
-            <div className="max-w-2xl mx-auto py-8 sm:py-14 space-y-6 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-[#C8F902]/15 border border-[#C8F902]/35 flex items-center justify-center mx-auto">
-                <Sparkles className="w-7 h-7 text-[#C8F902]" />
+            <div className="max-w-3xl mx-auto py-8 sm:py-14 space-y-6 text-center">
+              <div className="w-12 h-12 rounded-xl bg-zinc-800/80 border border-white/10 flex items-center justify-center mx-auto">
+                <Sparkles className="w-6 h-6 text-emerald-500" />
               </div>
               <div className="space-y-2">
-                <h2 className="font-display italic text-2xl sm:text-3xl font-extrabold text-white">
+                <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-zinc-100">
                   {t.coachPage.welcomeTitle}
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
+                <p className="text-sm leading-relaxed text-zinc-400 max-w-lg mx-auto">
                   {t.coachPage.welcomeSubtitle}
                 </p>
               </div>
@@ -621,10 +621,10 @@ function CoachChatInner() {
                     key={idx}
                     type="button"
                     onClick={() => void handleSend(chip)}
-                    className="p-3.5 rounded-xl bg-[#131A26] border border-[#1E293B] hover:border-[#C8F902]/50 text-xs sm:text-sm text-slate-200 hover:text-white transition-all flex items-center justify-between gap-3"
+                    className="p-4 rounded-xl bg-[#111114] border border-white/10 hover:border-white/20 text-sm text-zinc-200 hover:text-zinc-100 transition-colors flex items-center justify-between gap-3"
                   >
                     <span>{chip}</span>
-                    <Send className="w-3.5 h-3.5 text-[#C8F902] shrink-0" />
+                    <Send className="w-4 h-4 text-emerald-500 shrink-0" />
                   </button>
                 ))}
               </div>
@@ -640,33 +640,33 @@ function CoachChatInner() {
                     className={`flex items-start gap-3 ${isUser ? "justify-end" : "justify-start"}`}
                   >
                     {!isUser && (
-                      <div className="w-8 h-8 rounded-xl bg-[#C8F902]/15 border border-[#C8F902]/35 flex items-center justify-center shrink-0 mt-0.5">
-                        <Bot className="w-4 h-4 text-[#C8F902]" />
+                      <div className="w-8 h-8 rounded-lg bg-zinc-800/80 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <Bot className="w-4 h-4 text-emerald-500" />
                       </div>
                     )}
                     <div
-                      className={`max-w-[85%] rounded-2xl px-4 py-3 border ${
+                      className={`max-w-[85%] rounded-xl px-4 py-3 border ${
                         isUser
-                          ? "bg-[#1E293B] border-[#334155] text-white"
-                          : "bg-[#131A26] border-[#1E293B] text-slate-200"
+                          ? "bg-zinc-800/80 border-white/10 text-zinc-100"
+                          : "bg-[#111114] border-white/10 text-zinc-300"
                       }`}
                     >
                       {isUser ? (
-                        <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed">
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed text-zinc-100">
                           {msg.content}
                         </p>
                       ) : (
                         <>
                           <MarkdownMessage content={msg.content} />
                           {isStreaming && (
-                            <span className="inline-block w-1.5 h-3.5 ml-1 align-middle bg-[#C8F902] animate-pulse rounded-xs" />
+                            <span className="inline-block w-1.5 h-3.5 ml-1 align-middle bg-emerald-500 animate-pulse rounded-xs" />
                           )}
                         </>
                       )}
                     </div>
                     {isUser && (
-                      <div className="w-8 h-8 rounded-xl bg-[#38BDF8]/15 border border-[#38BDF8]/35 flex items-center justify-center shrink-0 mt-0.5">
-                        <UserIcon className="w-4 h-4 text-[#38BDF8]" />
+                      <div className="w-8 h-8 rounded-lg bg-zinc-800/80 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <UserIcon className="w-4 h-4 text-zinc-300" />
                       </div>
                     )}
                   </div>
@@ -674,10 +674,10 @@ function CoachChatInner() {
               })}
               {sending && !messages.some((m) => m.id.startsWith("streaming-")) && (
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-[#C8F902]/15 border border-[#C8F902]/35 flex items-center justify-center shrink-0">
-                    <Loader2 className="w-4 h-4 animate-spin text-[#C8F902]" />
+                  <div className="w-8 h-8 rounded-lg bg-zinc-800/80 border border-white/10 flex items-center justify-center shrink-0">
+                    <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />
                   </div>
-                  <div className="rounded-2xl px-4 py-3 bg-[#131A26] border border-[#1E293B] text-xs text-slate-400">
+                  <div className="rounded-xl px-4 py-3 bg-[#111114] border border-white/10 text-sm text-zinc-400">
                     {t.coachPage.thinking}
                   </div>
                 </div>
@@ -690,7 +690,7 @@ function CoachChatInner() {
         {/* Error Toast */}
         {error && (
           <div className="px-4 pb-2 max-w-3xl mx-auto w-full">
-            <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs">
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs">
               {error}
             </div>
           </div>
@@ -702,7 +702,7 @@ function CoachChatInner() {
             e.preventDefault();
             void handleSend();
           }}
-          className="border-t border-[#1E293B] bg-[#0E141F] p-3 sm:p-4 shrink-0"
+          className="border-t border-white/10 bg-[#09090B] p-3 sm:p-4 shrink-0"
         >
           <div className="max-w-3xl mx-auto flex items-end gap-2">
             <textarea
@@ -716,12 +716,12 @@ function CoachChatInner() {
                 }
               }}
               placeholder={t.coachPage.inputPlaceholder}
-              className="flex-1 resize-none bg-[#131A26] border border-[#1E293B] focus:border-[#C8F902]/60 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none"
+              className="flex-1 resize-none bg-[#111114] border border-white/10 focus:border-emerald-500/50 rounded-xl px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none"
             />
             <button
               type="submit"
               disabled={!input.trim() || sending}
-              className="px-4 py-2.5 rounded-xl bg-[#C8F902] hover:bg-[#d8ff3b] text-[#0B0F17] font-bold text-xs sm:text-sm transition-all disabled:opacity-40 flex items-center gap-1.5 shrink-0"
+              className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-sm transition-colors disabled:opacity-40 flex items-center gap-1.5 shrink-0"
             >
               <Send className="w-4 h-4" />
               <span className="hidden sm:inline">{t.coachPage.sendBtn}</span>
@@ -737,8 +737,8 @@ export default function CoachPage() {
   return (
     <Suspense
       fallback={
-        <div className="h-screen bg-[#0B0F17] flex items-center justify-center text-slate-300 text-xs">
-          <Loader2 className="w-5 h-5 animate-spin text-[#C8F902]" />
+        <div className="h-screen bg-[#09090B] flex items-center justify-center text-zinc-300 text-xs">
+          <Loader2 className="w-5 h-5 animate-spin text-emerald-500" />
         </div>
       }
     >

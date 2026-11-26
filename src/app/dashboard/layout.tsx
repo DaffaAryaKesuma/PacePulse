@@ -143,23 +143,23 @@ export default function DashboardLayout({
     exact ? pathname === href : pathname.startsWith(href);
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-slate-100">
+    <div className="min-h-screen bg-[#09090B] text-zinc-100">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 border-r border-[#1E293B] bg-[#0E141F] z-30">
-        <div className="p-4 border-b border-[#1E293B] flex items-center justify-between gap-2">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 border-r border-white/10 bg-[#09090B] z-30">
+        <div className="p-4 border-b border-white/10 flex items-center justify-between gap-2">
           <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
             <img
               src="/logo.jpg"
               alt="PacePulse"
-              className="w-8 h-8 rounded-xl object-cover border border-[#C8F902]/40 shadow-md shadow-[#C8F902]/10 shrink-0"
+              className="w-8 h-8 rounded-lg object-cover border border-white/10 shrink-0"
             />
-            <span className="font-display italic text-lg font-extrabold tracking-wider text-white">
-              PACE<span className="text-[#C8F902]">PULSE</span>
+            <span className="text-base font-bold tracking-tight text-zinc-100">
+              PACE<span className="text-emerald-500">PULSE</span>
             </span>
           </Link>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1.5 text-xs font-semibold overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-1 text-xs font-medium overflow-y-auto">
           {navItems.map((item) => {
             const active = isActive(item.href, item.exact);
             const Icon = item.icon;
@@ -167,10 +167,10 @@ export default function DashboardLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors ${
                   active
-                    ? "bg-[#C8F902]/12 border-[#C8F902]/35 text-[#C8F902] font-bold"
-                    : "border-transparent text-slate-400 hover:text-white hover:bg-[#131A26]"
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-semibold"
+                    : "border-transparent text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/70"
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
@@ -181,12 +181,12 @@ export default function DashboardLayout({
         </nav>
 
         {/* Global Actions & Language Switcher in Sidebar Bottom */}
-        <div className="p-3 border-t border-[#1E293B] space-y-2 text-xs">
+        <div className="p-3 border-t border-white/10 space-y-2 text-xs">
           <button
             type="button"
             onClick={() => void handleGlobalSync()}
             disabled={syncing}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#C8F902] hover:bg-[#d8ff3b] text-[#0B0F17] font-bold transition-all disabled:opacity-50 shadow-md shadow-[#C8F902]/15"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${syncing ? "animate-spin" : ""}`} />
             <span className="truncate">{syncing ? t.nav.syncing : t.nav.syncLatestRuns}</span>
@@ -196,9 +196,9 @@ export default function DashboardLayout({
             type="button"
             onClick={() => setIsSettingsOpen(true)}
             disabled={!currentUser}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#131A26] border border-[#1E293B] text-slate-200 hover:text-white hover:border-[#C8F902]/50 font-semibold transition-all disabled:opacity-50"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-zinc-900/70 border border-white/10 text-zinc-300 hover:text-zinc-100 hover:border-white/20 font-medium transition-colors disabled:opacity-50"
           >
-            <Settings className="w-3.5 h-3.5 text-[#FF5A1F] shrink-0" />
+            <Settings className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
             <span className="truncate">{t.header.athleteSettings}</span>
           </button>
 
@@ -227,17 +227,17 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      {/* Mobile & Tablet Top Utility Bar (keeps actions accessible without bottom-left collision) */}
-      <div className="lg:hidden sticky top-0 z-40 border-b border-[#1E293B] bg-[#0B0F17]/95 backdrop-blur-md">
+      {/* Mobile & Tablet Top Utility Bar */}
+      <div className="lg:hidden sticky top-0 z-40 border-b border-white/10 bg-[#09090B]/95 backdrop-blur-md">
         <div className="px-3 py-2 flex items-center justify-between gap-2 text-xs">
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <img
               src="/logo.jpg"
               alt="PacePulse"
-              className="w-7 h-7 rounded-lg object-cover border border-[#C8F902]/40 shrink-0"
+              className="w-7 h-7 rounded-lg object-cover border border-white/10 shrink-0"
             />
-            <span className="font-display italic text-base font-extrabold tracking-wider text-white">
-              PACE<span className="text-[#C8F902]">PULSE</span>
+            <span className="text-sm font-bold tracking-tight text-zinc-100">
+              PACE<span className="text-emerald-500">PULSE</span>
             </span>
           </Link>
 
@@ -248,7 +248,7 @@ export default function DashboardLayout({
               type="button"
               onClick={() => void handleGlobalSync()}
               disabled={syncing}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#C8F902] text-[#0B0F17] font-bold disabled:opacity-50"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 text-zinc-950 font-semibold disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
               <span>{syncing ? t.nav.syncing : t.nav.sync}</span>
@@ -259,16 +259,16 @@ export default function DashboardLayout({
               onClick={() => setIsSettingsOpen(true)}
               disabled={!currentUser}
               aria-label={t.nav.settings}
-              className="p-1.5 rounded-lg bg-[#131A26] border border-[#1E293B] text-slate-200 hover:text-white disabled:opacity-50"
+              className="p-1.5 rounded-lg bg-zinc-900 border border-white/10 text-zinc-300 hover:text-white disabled:opacity-50"
             >
-              <Settings className="w-3.5 h-3.5 text-[#FF5A1F]" />
+              <Settings className="w-3.5 h-3.5" />
             </button>
 
             <button
               type="button"
               onClick={() => void handleLogout()}
               aria-label={t.nav.logout}
-              className="p-1.5 rounded-lg bg-[#131A26] border border-[#1E293B] text-slate-400 hover:text-red-400"
+              className="p-1.5 rounded-lg bg-zinc-900 border border-white/10 text-zinc-400 hover:text-zinc-100"
             >
               <LogOut className="w-3.5 h-3.5" />
             </button>
@@ -301,7 +301,7 @@ export default function DashboardLayout({
       {/* Mobile & Tablet Bottom Navigation Bar */}
       <nav
         aria-label="Mobile dashboard navigation"
-        className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[#1E293B] bg-[#0B0F17]/95 backdrop-blur-md"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/10 bg-[#09090B]/95 backdrop-blur-md"
       >
         <div className="grid grid-cols-5 h-16 max-w-xl mx-auto px-1 font-sans">
           {navItems.map((item) => {
@@ -311,14 +311,14 @@ export default function DashboardLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center gap-1 rounded-xl mx-0.5 my-1.5 transition-colors ${
+                className={`flex flex-col items-center justify-center gap-1 rounded-lg mx-0.5 my-1.5 transition-colors ${
                   active
-                    ? "text-[#C8F902] bg-[#C8F902]/10"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "text-emerald-400 bg-emerald-500/10"
+                    : "text-zinc-400 hover:text-zinc-200"
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
-                <span className="text-[10px] font-bold truncate max-w-[72px]">
+                <span className="text-[10px] font-medium truncate max-w-[72px]">
                   {item.label}
                 </span>
               </Link>
