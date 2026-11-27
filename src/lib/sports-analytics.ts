@@ -114,9 +114,13 @@ export function calculateAcwr(activities: ActivityData[]): AcwrMetrics {
 
   let acuteMeters = 0;
   let chronicMeters = 0;
+  let earliestTs = now;
 
   for (const act of activities) {
     const ts = new Date(act.startDate).getTime();
+    if (ts <= now && ts < earliestTs) {
+      earliestTs = ts;
+    }
     if (ts >= twentyEightDaysAgo && ts <= now) {
       chronicMeters += act.distanceMeters;
       if (ts >= sevenDaysAgo) {
@@ -125,8 +129,11 @@ export function calculateAcwr(activities: ActivityData[]): AcwrMetrics {
     }
   }
 
+  const daysTracked = Math.max(7, (now - earliestTs) / (24 * 60 * 60 * 1000));
+  const divisorWeeks = Math.min(4, Math.max(1, daysTracked / 7));
+
   const acuteKm = Math.round((acuteMeters / 1000) * 10) / 10;
-  const chronicWeeklyAvgKm = Math.round((chronicMeters / 1000 / 4) * 10) / 10;
+  const chronicWeeklyAvgKm = Math.round((chronicMeters / 1000 / divisorWeeks) * 10) / 10;
   const ratio =
     chronicWeeklyAvgKm > 0
       ? Math.round((acuteKm / chronicWeeklyAvgKm) * 100) / 100
@@ -358,6 +365,161 @@ export interface ResolvedTrainingPhase {
   reasonId: string;
   reasonEn: string;
   weeksToRace: number | null;
+}
+
+export interface PhysiologicalThresholds {
+  lt1Hr: number | null;
+  lt2Hr: number | null;
+  thresholdPace: number | null;
+  peakHr: number | null;
+  sourceLabel: string;
+  isCalibrated: boolean;
+}
+
+/**
+ * 3-Tier Physiological Threshold Calibration (LT1 & LT2):
+ * - Tier 1: Manual Override (`manualLt2Hr`, `manualLt1Hr`, `manualThresholdPace`)
+ * - Tier 2: Auto-Calibrate from Race / Time Trial in last 90 days (4800-16000m with HR)
+ * - Tier 3: Baseline Estimation without faking RHR:
+ *    - 3A: Karvonen HRR (when peakHr + restingHr exist)
+ *    - 3B: % Peak HR (when peakHr exists without restingHr)
+ *    - 3C: Empty Account (returns null thresholds)
+ */
+export function resolvePhysiologicalThresholds(
+  user: {
+    maxHr?: number | null;
+    restingHr?: number | null;
+    manualLt1Hr?: number | null;
+    manualLt2Hr?: number | null;
+    manualThresholdPace?: number | null;
+    thresholdHr?: number | null;
+    thresholdPaceSec?: number | null;
+  },
+  activities: ActivityData[]
+): PhysiologicalThresholds {
+  const maxActivityHr = activities.reduce<number | null>((max, a) => {
+    if (typeof a.maxHeartrate === "number" && a.maxHeartrate > 0) {
+      return max === null ? Math.round(a.maxHeartrate) : Math.max(max, Math.round(a.maxHeartrate));
+    }
+    return max;
+  }, null);
+  const peakHr = user.maxHr && user.maxHr > 0 ? user.maxHr : maxActivityHr;
+
+  const vdotPred = calculateVdotPredictor(activities);
+  const vdotThresholdPace =
+    vdotPred && vdotPred.vdot > 0
+      ? Math.round(predictTimeSecForDistance(vdotPred.vdot, 10000) / 10) + 5
+      : null;
+  const fallbackThresholdPace = user.thresholdPaceSec ?? vdotThresholdPace;
+
+  // Tier 1: Manual Override
+  if (
+    (typeof user.manualLt2Hr === "number" && user.manualLt2Hr > 0) ||
+    (typeof user.manualLt1Hr === "number" && user.manualLt1Hr > 0) ||
+    (typeof user.manualThresholdPace === "number" && user.manualThresholdPace > 0)
+  ) {
+    const lt2Hr =
+      user.manualLt2Hr && user.manualLt2Hr > 0
+        ? user.manualLt2Hr
+        : user.manualLt1Hr && user.manualLt1Hr > 0
+          ? Math.round(user.manualLt1Hr / 0.84)
+          : user.thresholdHr ?? (peakHr ? Math.round(peakHr * 0.88) : null);
+    const lt1Hr =
+      user.manualLt1Hr && user.manualLt1Hr > 0
+        ? user.manualLt1Hr
+        : lt2Hr
+          ? Math.round(lt2Hr * 0.84)
+          : null;
+    const thresholdPace =
+      user.manualThresholdPace && user.manualThresholdPace > 0
+        ? user.manualThresholdPace
+        : fallbackThresholdPace;
+
+    return {
+      lt1Hr,
+      lt2Hr,
+      thresholdPace,
+      peakHr,
+      sourceLabel: "Manual Override",
+      isCalibrated: true,
+    };
+  }
+
+  // Tier 2: Auto-Calibrate from Race / Time Trial in Last 90 Days
+  const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
+  const raceKeywordRegex = /\b(time trial|tt|race|5k|10k)\b/i;
+
+  const raceCandidates = activities
+    .filter((a) => {
+      const ts = new Date(a.startDate).getTime();
+      if (ts < ninetyDaysAgo) return false;
+      if (a.distanceMeters < 4800 || a.distanceMeters > 16000) return false;
+      if (!a.averageHeartrate || a.averageHeartrate <= 0 || !a.averageSpeed || a.averageSpeed <= 0) {
+        return false;
+      }
+      if (peakHr && a.averageHeartrate < peakHr * 0.82) return false;
+      return a.workoutType === 1 || raceKeywordRegex.test(a.name);
+    })
+    .sort(
+      (a, b) =>
+        estimateVdotFromRun(b.distanceMeters, b.movingTimeSec) -
+        estimateVdotFromRun(a.distanceMeters, a.movingTimeSec)
+    );
+
+  if (raceCandidates.length > 0) {
+    const best = raceCandidates[0];
+    const avgHr = best.averageHeartrate!;
+    const avgPaceSec = Math.round(1000 / best.averageSpeed);
+
+    const is5kBand = best.distanceMeters <= 6500;
+    const lt2Hr = Math.round(avgHr * (is5kBand ? 0.965 : 0.985));
+    const thresholdPace = avgPaceSec + (is5kBand ? 13 : 5);
+    const lt1Hr = Math.round(lt2Hr * 0.84);
+
+    return {
+      lt1Hr,
+      lt2Hr,
+      thresholdPace,
+      peakHr,
+      sourceLabel: `Calibrated from ${best.name}`,
+      isCalibrated: true,
+    };
+  }
+
+  // Tier 3A: Karvonen HRR (when peakHr + restingHr both exist)
+  if (peakHr && user.restingHr && user.restingHr > 0 && peakHr > user.restingHr) {
+    const hrr = peakHr - user.restingHr;
+    return {
+      lt1Hr: Math.round(0.72 * hrr + user.restingHr),
+      lt2Hr: Math.round(0.86 * hrr + user.restingHr),
+      thresholdPace: fallbackThresholdPace,
+      peakHr,
+      sourceLabel: "Estimasi Karvonen (HRR)",
+      isCalibrated: false,
+    };
+  }
+
+  // Tier 3B: % Peak HR (when peakHr exists without restingHr — never fake RHR=60)
+  if (peakHr) {
+    return {
+      lt1Hr: Math.round(peakHr * 0.77),
+      lt2Hr: Math.round(peakHr * 0.88),
+      thresholdPace: fallbackThresholdPace,
+      peakHr,
+      sourceLabel: "Estimasi Awal (Peak HR)",
+      isCalibrated: false,
+    };
+  }
+
+  // Tier 3C: Empty Account (no HR data yet)
+  return {
+    lt1Hr: null,
+    lt2Hr: null,
+    thresholdPace: user.thresholdPaceSec ?? null,
+    peakHr: null,
+    sourceLabel: "Menunggu 1 aktivitas dengan sensor HR",
+    isCalibrated: false,
+  };
 }
 
 export interface RaceReadinessInput {

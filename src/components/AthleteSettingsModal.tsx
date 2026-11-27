@@ -32,16 +32,20 @@ export function AthleteSettingsModal({
   const [pbSeconds, setPbSeconds] = useState(pbSec % 60);
 
   const [thresholdHr, setThresholdHr] = useState(athlete.thresholdHr?.toString() || "");
-  const [maxHr, setMaxHr] = useState(athlete.maxHr?.toString() || "190");
+  const [maxHr, setMaxHr] = useState(athlete.maxHr?.toString() || "");
+  const [restingHr, setRestingHr] = useState(athlete.restingHr?.toString() || "");
+  const [manualLt1Hr, setManualLt1Hr] = useState(athlete.manualLt1Hr?.toString() || "");
+  const [manualLt2Hr, setManualLt2Hr] = useState(athlete.manualLt2Hr?.toString() || "");
+  const [manualPaceMin, setManualPaceMin] = useState(
+    athlete.manualThresholdPace ? Math.floor(athlete.manualThresholdPace / 60).toString() : ""
+  );
+  const [manualPaceSec, setManualPaceSec] = useState(
+    athlete.manualThresholdPace ? (athlete.manualThresholdPace % 60).toString().padStart(2, "0") : ""
+  );
   const [trainingPhase, setTrainingPhase] = useState(athlete.trainingPhase || "auto");
   const [targetRaceDate, setTargetRaceDate] = useState(
     athlete.targetRaceDate ? athlete.targetRaceDate.split("T")[0] : ""
   );
-  const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
-  const [hasActiveWebhook, setHasActiveWebhook] = useState(
-    Boolean(athlete.hasDiscordWebhook || athlete.discordWebhookUrl)
-  );
-  const [clearingWebhook, setClearingWebhook] = useState(false);
   const [isPublic, setIsPublic] = useState(athlete.isPublic !== false);
   const [username, setUsername] = useState(athlete.username || "");
 
@@ -69,22 +73,28 @@ export function AthleteSettingsModal({
       return;
     }
 
+    const parsedPaceMin = manualPaceMin !== "" ? parseInt(manualPaceMin, 10) : NaN;
+    const parsedPaceSec = manualPaceSec !== "" ? parseInt(manualPaceSec, 10) : 0;
+    const calculatedManualPace =
+      !Number.isNaN(parsedPaceMin) && parsedPaceMin > 0
+        ? parsedPaceMin * 60 + (Number.isNaN(parsedPaceSec) ? 0 : Math.min(59, Math.max(0, parsedPaceSec)))
+        : null;
+
     const payload: Record<string, unknown> = {
       goalDistance,
       goalTimeSec: calculatedGoalSec,
       currentPbSec: calculatedPbSec > 0 ? calculatedPbSec : null,
       thresholdHr: thresholdHr ? parseInt(thresholdHr, 10) : null,
-      maxHr: maxHr ? parseInt(maxHr, 10) : 190,
+      maxHr: maxHr ? parseInt(maxHr, 10) : null,
+      restingHr: restingHr ? parseInt(restingHr, 10) : null,
+      manualLt1Hr: manualLt1Hr ? parseInt(manualLt1Hr, 10) : null,
+      manualLt2Hr: manualLt2Hr ? parseInt(manualLt2Hr, 10) : null,
+      manualThresholdPace: calculatedManualPace,
       trainingPhase,
       targetRaceDate: targetRaceDate || null,
       isPublic,
       username: username.trim(),
     };
-
-    const trimmedWebhook = discordWebhookUrl.trim();
-    if (trimmedWebhook !== "") {
-      payload.discordWebhookUrl = trimmedWebhook;
-    }
 
     try {
       const res = await fetch("/api/user/settings", {
@@ -98,10 +108,6 @@ export function AthleteSettingsModal({
       if (!res.ok) {
         setError(data.error || t.settings.saveError);
       } else {
-        if (trimmedWebhook !== "") {
-          setHasActiveWebhook(true);
-          setDiscordWebhookUrl("");
-        }
         setSuccess(true);
         setTimeout(() => {
           onUpdated();
@@ -112,31 +118,6 @@ export function AthleteSettingsModal({
       setError(t.settings.networkError);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleClearWebhook = async () => {
-    if (clearingWebhook || saving) return;
-    setClearingWebhook(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/user/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clearDiscordWebhook: true }),
-      });
-      if (res.ok) {
-        setHasActiveWebhook(false);
-        setDiscordWebhookUrl("");
-        onUpdated();
-      } else {
-        const data = (await res.json()) as { error?: string };
-        setError(data.error || t.settings.saveError);
-      }
-    } catch {
-      setError(t.settings.networkError);
-    } finally {
-      setClearingWebhook(false);
     }
   };
 
@@ -295,22 +276,25 @@ export function AthleteSettingsModal({
 
           {/* Physiological Benchmarks */}
           <div className="p-4 rounded-xl bg-zinc-900/70 border border-white/10 space-y-3">
-            <div className="flex items-center gap-2 text-zinc-300 font-bold uppercase tracking-wider">
-              <Heart className="w-4 h-4 text-emerald-400" /> {t.settings.biometricsTitle}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-zinc-300 font-bold uppercase tracking-wider">
+                <Heart className="w-4 h-4 text-emerald-400" /> {t.settings.biometricsTitle}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setManualLt1Hr("");
+                  setManualLt2Hr("");
+                  setManualPaceMin("");
+                  setManualPaceSec("");
+                }}
+                className="px-2.5 py-1 rounded-md bg-zinc-800/80 border border-white/10 text-[11px] font-medium text-zinc-300 hover:text-white hover:border-white/20 transition-colors"
+              >
+                {t.settings.resetToAuto}
+              </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="text-zinc-500 block mb-1">{t.settings.thresholdHr}</label>
-                <input
-                  type="number"
-                  value={thresholdHr}
-                  onChange={(e) => setThresholdHr(e.target.value)}
-                  placeholder="e.g. 173"
-                  className="w-full bg-[#111114] border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50"
-                />
-              </div>
-
               <div>
                 <label className="text-zinc-500 block mb-1">{t.settings.maxHr}</label>
                 <input
@@ -318,6 +302,17 @@ export function AthleteSettingsModal({
                   value={maxHr}
                   onChange={(e) => setMaxHr(e.target.value)}
                   placeholder="e.g. 190"
+                  className="w-full bg-[#111114] border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50"
+                />
+              </div>
+
+              <div>
+                <label className="text-zinc-500 block mb-1">{t.settings.restingHr}</label>
+                <input
+                  type="number"
+                  value={restingHr}
+                  onChange={(e) => setRestingHr(e.target.value)}
+                  placeholder="e.g. 52"
                   className="w-full bg-[#111114] border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50"
                 />
               </div>
@@ -337,50 +332,66 @@ export function AthleteSettingsModal({
                 </select>
               </div>
             </div>
+
+            <div className="pt-2 border-t border-white/5 space-y-2">
+              <p className="text-[11px] text-zinc-400">{t.settings.manualOverrideHint}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-zinc-500 block mb-1">{t.settings.manualLt1Hr}</label>
+                  <input
+                    type="number"
+                    value={manualLt1Hr}
+                    onChange={(e) => setManualLt1Hr(e.target.value)}
+                    placeholder="Auto"
+                    className="w-full bg-[#111114] border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-zinc-500 block mb-1">{t.settings.manualLt2Hr}</label>
+                  <input
+                    type="number"
+                    value={manualLt2Hr}
+                    onChange={(e) => setManualLt2Hr(e.target.value)}
+                    placeholder="Auto"
+                    className="w-full bg-[#111114] border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-zinc-500 block mb-1">{t.settings.manualThresholdPace}</label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <input
+                      type="number"
+                      min="2"
+                      max="12"
+                      value={manualPaceMin}
+                      onChange={(e) => setManualPaceMin(e.target.value)}
+                      placeholder="MM"
+                      className="bg-[#111114] border border-white/10 rounded-lg px-2 py-2 text-center text-white focus:outline-none focus:border-emerald-500/50"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={manualPaceSec}
+                      onChange={(e) => setManualPaceSec(e.target.value)}
+                      placeholder="SS"
+                      className="bg-[#111114] border border-white/10 rounded-lg px-2 py-2 text-center text-white focus:outline-none focus:border-emerald-500/50"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Discord Webhook & Public Visibility */}
+          {/* Public Visibility */}
           <div className="p-4 rounded-xl bg-zinc-900/70 border border-white/10 space-y-3">
             <div className="flex items-center gap-2 text-zinc-300 font-bold uppercase tracking-wider">
               <ShieldCheck className="w-4 h-4 text-blue-400" /> {t.settings.integrationsTitle}
             </div>
 
-            <div>
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                <label className="text-zinc-500">{t.settings.discordLabel}</label>
-                {hasActiveWebhook && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
-                      {t.settings.discordActiveBadge}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={clearingWebhook || saving}
-                      onClick={() => void handleClearWebhook()}
-                      className="px-2 py-0.5 rounded-md bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 text-[10px] font-bold transition-colors disabled:opacity-50"
-                    >
-                      {t.settings.discordRemoveBtn}
-                    </button>
-                  </div>
-                )}
-              </div>
-              <input
-                type="url"
-                value={discordWebhookUrl}
-                onChange={(e) => setDiscordWebhookUrl(e.target.value)}
-                placeholder={
-                  hasActiveWebhook
-                    ? t.settings.discordKeepPlaceholder
-                    : "https://discord.com/api/webhooks/..."
-                }
-                className="w-full bg-[#111114] border border-white/10 rounded-lg px-3 py-2 text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500/50"
-              />
-              <span className="text-[10px] text-zinc-600 block mt-0.5">
-                {t.settings.discordHint}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div>
                 <label className="text-zinc-500 block mb-1">{t.settings.publicUsername}</label>
                 <div className="flex items-center">

@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { getValidUserStravaToken, fetchStravaActivity } from "@/lib/strava";
 import { getGeminiFeedback } from "@/lib/gemini";
-import { sendDiscordNotification } from "@/lib/discord";
 import { syncUserPersonalBests } from "@/lib/pb-sync";
 import {
   fetchRunEnvironment,
@@ -174,6 +173,7 @@ async function processMultiUserActivity(ownerId: number, activityId: number): Pr
       name: activity.name,
       aiFeedback,
       trainingPhase: resolvedPhase,
+      workoutType: activity.workout_type ?? null,
       gearName,
       temperatureC: env.temperatureC,
       humidityPct: env.humidityPct,
@@ -201,6 +201,7 @@ async function processMultiUserActivity(ownerId: number, activityId: number): Pr
         : Prisma.JsonNull,
       aiFeedback,
       trainingPhase: resolvedPhase,
+      workoutType: activity.workout_type ?? null,
       gearName,
       temperatureC: env.temperatureC,
       humidityPct: env.humidityPct,
@@ -218,36 +219,5 @@ async function processMultiUserActivity(ownerId: number, activityId: number): Pr
     await syncUserPersonalBests(user.id, accessToken);
   } catch (pbErr) {
     console.warn("[Strava Webhook] Personal Best sync warning:", pbErr);
-  }
-
-  // 7. Dispatch Discord Webhook notification if user has configured one or if main athlete
-  const targetDiscordWebhook =
-    user.discordWebhookUrl ||
-    (user.stravaAthleteId === BigInt(168998449) ? process.env.DISCORD_WEBHOOK_URL : null);
-
-  if (targetDiscordWebhook) {
-    try {
-      await sendDiscordNotification(
-        {
-          athleteName: user.fullName,
-          activityName: activity.name,
-          distanceKm: metersToKm(activity.distance),
-          avgPace,
-          avgHr: activity.average_heartrate ?? null,
-          maxHr: activity.max_heartrate ?? null,
-          cadenceSpm,
-          elevationGain: activity.total_elevation_gain ?? null,
-          duration: formatDuration(activity.moving_time),
-          trainingPhase: user.trainingPhase || trainingPhase,
-          aiFeedback,
-          startDate: new Date(activity.start_date),
-          language: user.preferredLanguage,
-        },
-        targetDiscordWebhook
-      );
-      console.log(`[Strava Webhook] Discord notification dispatched to athlete's webhook.`);
-    } catch (discordErr) {
-      console.error("[Strava Webhook] Discord dispatch error:", discordErr);
-    }
   }
 }

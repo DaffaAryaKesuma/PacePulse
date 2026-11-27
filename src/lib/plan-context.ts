@@ -6,6 +6,7 @@ import {
   calculateAcwr,
   calculateShoeMileage,
   resolveActiveTrainingPhase,
+  resolvePhysiologicalThresholds,
   type ResolvedTrainingPhase,
 } from "./sports-analytics";
 import type { ActivityData, WeeklyPlanDay } from "@/types";
@@ -48,9 +49,10 @@ export async function buildUserPlanContext(user: User): Promise<{
       ? dbGears.map((g) => g.name)
       : calculateShoeMileage(activities).map((s) => s.gearName);
 
-  const maxHr = user.maxHr || 190;
-  const lt2Hr = user.thresholdHr || 173;
-  const lt1Hr = Math.max(120, lt2Hr - 11);
+  const thresholds = resolvePhysiologicalThresholds(user, activities);
+  const maxHr = thresholds.peakHr || 190;
+  const lt2Hr = thresholds.lt2Hr || 173;
+  const lt1Hr = thresholds.lt1Hr || Math.max(120, Math.round(lt2Hr * 0.84));
 
   const recentRuns = activities.slice(0, 7).map((a) => ({
     name: a.name,

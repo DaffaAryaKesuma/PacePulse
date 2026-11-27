@@ -15,7 +15,7 @@ import {
   Medal,
   RefreshCw,
 } from "lucide-react";
-import { useLanguage } from "@/components/LanguageProvider";
+import { LanguageToggle, useLanguage } from "@/components/LanguageProvider";
 import {
   calculateVdotPredictor,
   calculateAcwr,
@@ -146,15 +146,8 @@ export default function SportsLabAnalyticsPage() {
     <div className="min-h-screen bg-[#09090B] text-white">
       <header className="border-b border-white/10 bg-[#09090B]/80 backdrop-blur-md sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-sans">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <span className="flex items-center gap-1.5 text-emerald-400 font-bold tracking-wider truncate">
-              <Radio className="w-3.5 h-3.5 animate-pulse shrink-0" />
-              <span className="hidden sm:inline">{t.nav.stravaConnectedFull}</span>
-              <span className="sm:hidden">{t.nav.stravaConnected}</span>
-            </span>
-            <span className="text-zinc-600">•</span>
-            <span className="text-white font-bold truncate">{t.nav.analytics}</span>
-          </div>
+          <span className="text-zinc-100 font-semibold truncate">{t.nav.analytics}</span>
+          <LanguageToggle />
         </div>
       </header>
 

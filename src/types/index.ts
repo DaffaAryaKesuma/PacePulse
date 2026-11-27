@@ -9,14 +9,16 @@ export interface AthleteInfo {
   goalTimeSec: number | null;
   currentPbSec: number | null;
   thresholdHr: number | null;
-  maxHr: number;
+  maxHr: number | null;
+  restingHr?: number | null;
+  manualLt1Hr?: number | null;
+  manualLt2Hr?: number | null;
+  manualThresholdPace?: number | null;
   thresholdPaceSec: number | null;
   trainingPhase: string;
   targetRaceDate?: string | null;
   isPublic: boolean;
   preferredLanguage?: string;
-  discordWebhookUrl?: string | null;
-  hasDiscordWebhook?: boolean;
 }
 
 export type LifestyleTag = "poor_sleep" | "high_caffeine" | "heavy_legs" | "work_stress";
@@ -39,6 +41,7 @@ export interface ActivityData {
   splitsJson: SplitData[] | null;
   aiFeedback: string | null;
   trainingPhase: string;
+  workoutType?: number | null;
   gearName?: string | null;
   temperatureC?: number | null;
   humidityPct?: number | null;

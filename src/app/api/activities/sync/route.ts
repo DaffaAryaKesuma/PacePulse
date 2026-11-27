@@ -183,6 +183,7 @@ export async function POST(request: NextRequest) {
           splitsJson: Prisma.JsonNull,
           aiFeedback: "AI analysis pending.",
           trainingPhase,
+          workoutType: run.workout_type ?? null,
           gearName: resolvedGear,
           trafficFrictionScore: computeTrafficFrictionScore(
             run.elapsed_time,

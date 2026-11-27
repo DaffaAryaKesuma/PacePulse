@@ -24,6 +24,7 @@ import {
   calculateAcwr,
   calculateRaceReadiness,
   calculateVdotPredictor,
+  resolvePhysiologicalThresholds,
 } from "@/lib/sports-analytics";
 import type { DashboardData } from "@/types";
 
@@ -162,6 +163,7 @@ export default function PublicProfilePage({ params }: PageProps) {
             longestRun30dKm,
             acwr: acwrMetrics.ratio,
           });
+          const thresholds = resolvePhysiologicalThresholds(athlete, data.activities);
           return (
             <>
               <AthleteHeader
@@ -169,6 +171,7 @@ export default function PublicProfilePage({ params }: PageProps) {
                 vdot={vdotPred?.vdot ?? null}
                 personalBests={data.personalBests ?? []}
                 readiness={readiness}
+                thresholds={thresholds}
                 isOwner={false}
               />
 

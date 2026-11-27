@@ -186,7 +186,7 @@ export default function DashboardLayout({
             type="button"
             onClick={() => void handleGlobalSync()}
             disabled={syncing}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold transition-colors disabled:opacity-50"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${syncing ? "animate-spin" : ""}`} />
             <span className="truncate">{syncing ? t.nav.syncing : t.nav.syncLatestRuns}</span>
@@ -203,7 +203,10 @@ export default function DashboardLayout({
           </button>
 
           <div className="pt-1 flex items-center justify-between gap-2">
-            <LanguageToggle onChange={handleLanguagePersist} />
+            <span className="flex items-center gap-1.5 text-[10px] font-medium text-emerald-400 tracking-wide truncate">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+              <span className="truncate">{t.nav.stravaConnectedFull}</span>
+            </span>
 
             <div className="flex items-center gap-1">
               <Link

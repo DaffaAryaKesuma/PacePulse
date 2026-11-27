@@ -16,12 +16,14 @@ export async function PATCH(request: NextRequest) {
       goalTimeSec?: number | null;
       currentPbSec?: number | null;
       thresholdHr?: number | null;
-      maxHr?: number;
+      maxHr?: number | null;
+      restingHr?: number | null;
+      manualLt1Hr?: number | null;
+      manualLt2Hr?: number | null;
+      manualThresholdPace?: number | null;
       thresholdPaceSec?: number | null;
       trainingPhase?: string;
       targetRaceDate?: string | null;
-      discordWebhookUrl?: string | null;
-      clearDiscordWebhook?: boolean;
       isPublic?: boolean;
       preferredLanguage?: string;
       username?: string;
@@ -33,30 +35,17 @@ export async function PATCH(request: NextRequest) {
     if (body.goalTimeSec !== undefined) dataToUpdate.goalTimeSec = body.goalTimeSec;
     if (body.currentPbSec !== undefined) dataToUpdate.currentPbSec = body.currentPbSec;
     if (body.thresholdHr !== undefined) dataToUpdate.thresholdHr = body.thresholdHr;
-    if (typeof body.maxHr === "number") dataToUpdate.maxHr = body.maxHr;
+    if (body.maxHr !== undefined) dataToUpdate.maxHr = body.maxHr;
+    if (body.restingHr !== undefined) dataToUpdate.restingHr = body.restingHr;
+    if (body.manualLt1Hr !== undefined) dataToUpdate.manualLt1Hr = body.manualLt1Hr;
+    if (body.manualLt2Hr !== undefined) dataToUpdate.manualLt2Hr = body.manualLt2Hr;
+    if (body.manualThresholdPace !== undefined) dataToUpdate.manualThresholdPace = body.manualThresholdPace;
     if (body.thresholdPaceSec !== undefined) dataToUpdate.thresholdPaceSec = body.thresholdPaceSec;
     if (body.trainingPhase !== undefined) dataToUpdate.trainingPhase = body.trainingPhase;
     if (body.targetRaceDate !== undefined) {
       dataToUpdate.targetRaceDate = body.targetRaceDate
         ? new Date(body.targetRaceDate)
         : null;
-    }
-    if (body.clearDiscordWebhook === true) {
-      dataToUpdate.discordWebhookUrl = null;
-    } else if (typeof body.discordWebhookUrl === "string") {
-      const trimmedWebhook = body.discordWebhookUrl.trim();
-      if (trimmedWebhook !== "" && trimmedWebhook.toLowerCase() !== "configured") {
-        const isValidDiscordUrl =
-          trimmedWebhook.startsWith("https://discord.com/api/webhooks/") ||
-          trimmedWebhook.startsWith("https://discordapp.com/api/webhooks/");
-        if (!isValidDiscordUrl) {
-          return NextResponse.json(
-            { error: "URL Webhook Discord harus diawali https://discord.com/api/webhooks/" },
-            { status: 400 }
-          );
-        }
-        dataToUpdate.discordWebhookUrl = trimmedWebhook;
-      }
     }
     if (typeof body.isPublic === "boolean") dataToUpdate.isPublic = body.isPublic;
     if (body.preferredLanguage === "id" || body.preferredLanguage === "en") {
@@ -97,11 +86,13 @@ export async function PATCH(request: NextRequest) {
         currentPbSec: updated.currentPbSec,
         thresholdHr: updated.thresholdHr,
         maxHr: updated.maxHr,
+        restingHr: updated.restingHr,
+        manualLt1Hr: updated.manualLt1Hr,
+        manualLt2Hr: updated.manualLt2Hr,
+        manualThresholdPace: updated.manualThresholdPace,
         thresholdPaceSec: updated.thresholdPaceSec,
         trainingPhase: updated.trainingPhase,
         targetRaceDate: updated.targetRaceDate ? updated.targetRaceDate.toISOString() : null,
-        discordWebhookUrl: updated.discordWebhookUrl ? "configured" : null,
-        hasDiscordWebhook: Boolean(updated.discordWebhookUrl),
         isPublic: updated.isPublic,
         preferredLanguage: updated.preferredLanguage,
       },

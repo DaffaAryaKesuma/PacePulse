@@ -22,13 +22,14 @@ import { AthleteHeader } from "@/components/AthleteHeader";
 import { KpiCard } from "@/components/KpiCard";
 import { TelemetryCharts } from "@/components/TelemetryCharts";
 import { ActivityCard } from "@/components/ActivityCard";
-import { useLanguage } from "@/components/LanguageProvider";
+import { LanguageToggle, useLanguage } from "@/components/LanguageProvider";
 import { speedToPace } from "@/lib/formatting";
 import {
   calculateAcwr,
   calculateRaceReadiness,
   calculateVdotPredictor,
   resolveActiveTrainingPhase,
+  resolvePhysiologicalThresholds,
 } from "@/lib/sports-analytics";
 import type { DashboardData, AthleteInfo } from "@/types";
 
@@ -120,6 +121,10 @@ export default function PersonalDashboard() {
     currentUser && data && acwrMetrics
       ? resolveActiveTrainingPhase(currentUser, data.activities, acwrMetrics)
       : null;
+  const thresholds =
+    currentUser && data
+      ? resolvePhysiologicalThresholds(currentUser, data.activities)
+      : null;
 
   return () => window.removeEventListener("pacepulse:refresh", onRefresh);
   }, [fetchData]);
@@ -203,25 +208,18 @@ export default function PersonalDashboard() {
     currentUser && data && acwrMetrics
       ? resolveActiveTrainingPhase(currentUser, data.activities, acwrMetrics)
       : null;
+  const thresholds =
+    currentUser && data
+      ? resolvePhysiologicalThresholds(currentUser, data.activities)
+      : null;
 
   return (
     <div className="min-h-screen bg-[#09090B] text-zinc-100 selection:bg-emerald-500/20 selection:text-emerald-400">
-      {/* Clean Page Topbar: Connection Status + Page Breadcrumb */}
+      {/* Clean Page Topbar */}
       <header className="border-b border-white/10 bg-[#09090B]/90 backdrop-blur-md sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2 text-xs">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <span className="flex items-center gap-1.5 text-emerald-400 font-semibold tracking-wide truncate">
-              <Radio className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden sm:inline">{t.nav.stravaConnectedFull}</span>
-              <span className="sm:hidden">{t.nav.stravaConnected}</span>
-            </span>
-            <span className="text-zinc-600">•</span>
-            <span className="text-zinc-100 font-semibold truncate">{t.nav.overview}</span>
-          </div>
-
-          <span className="hidden md:inline text-zinc-400 truncate">
-            {t.nav.welcome} <strong className="text-zinc-100">{currentUser?.fullName}</strong>
-          </span>
+          <span className="text-zinc-100 font-semibold truncate">{t.nav.overview}</span>
+          <LanguageToggle />
         </div>
       </header>
 
@@ -272,6 +270,7 @@ export default function PersonalDashboard() {
           vdot={vdotPredictor?.vdot ?? null}
           personalBests={data?.personalBests ?? []}
           readiness={readiness}
+          thresholds={thresholds}
           isOwner={true}
         />
 

@@ -7,6 +7,7 @@ import {
   calculateAcwr,
   calculateVdotPredictor,
   resolveActiveTrainingPhase,
+  resolvePhysiologicalThresholds,
 } from "@/lib/sports-analytics";
 import { formatDuration, metersToKm, speedToPace } from "@/lib/formatting";
 import type { ActivityData, SplitData } from "@/types";
@@ -258,21 +259,24 @@ export async function POST(request: NextRequest) {
     const acwr = calculateAcwr(activityPool);
     const vdotResult = calculateVdotPredictor(activityPool);
     const resolvedPhase = resolveActiveTrainingPhase(user, activityPool, acwr);
+    const thresholds = resolvePhysiologicalThresholds(user, activityPool);
 
-    // Safe physiological defaults if user hasn't filled every biometric field
-    const maxHr = user.maxHr || 190;
-    const lt2Hr = user.thresholdHr ?? Math.round(maxHr * 0.89);
-    const lt1Hr = Math.max(120, lt2Hr - 11);
-    const estRestingHr = Math.max(42, Math.min(72, Math.round(maxHr * 0.28)));
+    const maxHr = thresholds.peakHr;
+    const lt2Hr = thresholds.lt2Hr;
+    const lt1Hr = thresholds.lt1Hr;
+    const thresholdPace = thresholds.thresholdPace;
     const lang = user.preferredLanguage === "en" ? "en" : "id";
 
-    const hrZonesSummary = [
-      `Z1 Recovery: < ${Math.round(maxHr * 0.7)} bpm`,
-      `Z2 Aerobic (Sub-LT1): ${Math.round(maxHr * 0.7)}-${lt1Hr} bpm`,
-      `Z3 Tempo (Grey Zone): ${lt1Hr + 1}-${lt2Hr - 1} bpm`,
-      `Z4 Threshold (LT2): ${lt2Hr}-${Math.round(maxHr * 0.94)} bpm`,
-      `Z5 VO2Max: > ${Math.round(maxHr * 0.94)} bpm`,
-    ].join(" | ");
+    const hrZonesSummary =
+      maxHr && lt1Hr && lt2Hr
+        ? [
+            `Z1 Recovery: < ${Math.round(maxHr * 0.7)} bpm`,
+            `Z2 Aerobic (Sub-LT1): ${Math.round(maxHr * 0.7)}-${lt1Hr} bpm`,
+            `Z3 Tempo (Grey Zone): ${lt1Hr + 1}-${lt2Hr - 1} bpm`,
+            `Z4 Threshold (LT2): ${lt2Hr}-${Math.round(maxHr * 0.94)} bpm`,
+            `Z5 VO2Max: > ${Math.round(maxHr * 0.94)} bpm`,
+          ].join(" | ")
+        : "Waiting for 1 activity with Heart Rate sensor data";
 
     const goalText =
       !user.goalDistance || user.goalDistance === "General Fitness"
@@ -345,7 +349,7 @@ ATHLETE TELEMETRY & PHYSIOLOGY (100% PERSONALIZED FOR THIS USER):
 - Athlete: ${user.fullName}
 - Target Goal: ${goalText}${user.targetRaceDate ? ` (Race Date: ${user.targetRaceDate.toISOString().slice(0, 10)})` : ""}
 - Active Periodization Phase: ${resolvedPhase.labelEn} (${resolvedPhase.isAuto ? "Auto-resolved" : "Manual"}) — ${lang === "id" ? resolvedPhase.reasonId : resolvedPhase.reasonEn}
-- Biometrics: Max HR = ${maxHr} bpm | Est. Resting HR = ${estRestingHr} bpm | LT1 (Z2 Cap) = ${lt1Hr} bpm | LT2 (Threshold) = ${lt2Hr} bpm${user.thresholdPaceSec ? ` | Threshold Pace = ${Math.floor(user.thresholdPaceSec / 60)}:${(user.thresholdPaceSec % 60).toString().padStart(2, "0")}/km` : ""}
+- Biometrics (${thresholds.sourceLabel}): Peak/Max HR = ${maxHr ? `${maxHr} bpm` : "Not available"}${user.restingHr ? ` | Resting HR = ${user.restingHr} bpm` : ""} | LT1 (Z2 Cap) = ${lt1Hr ? `${lt1Hr} bpm` : "N/A"} | LT2 (Threshold) = ${lt2Hr ? `${lt2Hr} bpm` : "N/A"}${thresholdPace ? ` | Threshold Pace = ${Math.floor(thresholdPace / 60)}:${(thresholdPace % 60).toString().padStart(2, "0")}/km` : ""}
 - HR Zones: ${hrZonesSummary}
 - VDOT: ${vdotResult?.vdot ?? "Unknown"} | ACWR: ${acwr.ratio} (${acwr.status}) | Acute 7d: ${acwr.acuteKm} km | Chronic 28d avg: ${acwr.chronicWeeklyAvgKm} km/wk
 - Personal Bests: ${pbSummary}

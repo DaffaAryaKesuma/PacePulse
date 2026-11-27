@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { AthleteInfo, PersonalBestInfo } from "@/types";
 import {
   predictTimeSecForDistance,
+  type PhysiologicalThresholds,
   type RaceReadinessResult,
   type ResolvedTrainingPhase,
 } from "@/lib/sports-analytics";
@@ -21,6 +22,7 @@ interface AthleteHeaderProps {
   vdot?: number | null;
   personalBests?: PersonalBestInfo[];
   readiness?: RaceReadinessResult | null;
+  thresholds?: PhysiologicalThresholds | null;
   compact?: boolean;
 }
 
@@ -33,6 +35,7 @@ export function AthleteHeader({
   vdot,
   personalBests,
   readiness,
+  thresholds,
   compact = false,
 }: AthleteHeaderProps) {
   const { language, t } = useLanguage();
@@ -50,9 +53,10 @@ export function AthleteHeader({
   const goalTimeSec = athlete?.goalTimeSec ?? null;
   const isGeneralFitness = goalDistance === "General Fitness";
   const hasRaceGoal = Boolean(goalDistance && !isGeneralFitness && goalTimeSec && goalTimeSec > 0);
-  const thresholdHr = athlete?.thresholdHr || 173;
-  const maxHr = athlete?.maxHr || 190;
-  const hrCap = hrCapProp || (thresholdHr > 0 ? thresholdHr - 11 : 162);
+  const maxHr = thresholds?.peakHr ?? athlete?.maxHr ?? null;
+  const thresholdHr = thresholds?.lt2Hr ?? athlete?.thresholdHr ?? null;
+  const lt1Hr = thresholds?.lt1Hr ?? (thresholdHr ? Math.round(thresholdHr * 0.84) : null);
+  const hrCap = hrCapProp ?? lt1Hr;
 
   // Calculate goal pacing
   const distanceKmMap: Record<string, number> = {
@@ -179,11 +183,6 @@ export function AthleteHeader({
               <h2 className="text-sm font-semibold text-zinc-100 wrap-break-word">
                 {athleteName}
               </h2>
-              {athlete?.username && (
-                <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-800/80 text-zinc-300 border border-white/10">
-                  @{athlete.username}
-                </span>
-              )}
               {isDemo && (
                 <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-800/80 text-zinc-200 border border-white/10">
                   {t.header.demoTelemetry}
@@ -215,14 +214,18 @@ export function AthleteHeader({
                 ? language === "id"
                   ? resolvedPhase.labelId
                   : resolvedPhase.labelEn
-                : `${activePhase} ${t.header.phaseSuffix}`}{" "}
-              • {t.header.capLabel} ≤ {hrCap} BPM
+                : `${activePhase} ${t.header.phaseSuffix}`}
+              {hrCap ? ` • ${t.header.capLabel} ≤ ${hrCap} BPM` : ""}
             </span>
           </div>
 
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800/80 border border-white/10 text-[11px] font-medium text-zinc-300 tabular-nums">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <span>LT2: {thresholdHr} BPM</span>
+            <span>
+              {lt1Hr && thresholdHr
+                ? `LT1: ${lt1Hr} • LT2: ${thresholdHr} BPM`
+                : t.header.waitingHrSensor}
+            </span>
           </div>
 
           {athlete?.username && athlete.isPublic && (
@@ -367,25 +370,47 @@ export function AthleteHeader({
             </div>
 
             {/* Heart Rate Zones Reference Strip */}
-            <div className="pt-3 border-t border-white/5 flex flex-wrap items-center gap-2 text-[11px] tabular-nums">
-              <span className="text-zinc-400 uppercase tracking-wider flex items-center gap-1 font-medium">
-                <Gauge className="w-3.5 h-3.5 text-emerald-500" /> {t.header.hrZones}
-              </span>
-              <span className="px-2 py-0.5 rounded-md bg-zinc-800/80 text-zinc-200 border border-white/10">
-                {t.header.z1} &lt;{Math.round(maxHr * 0.70)}
-              </span>
-              <span className="px-2 py-0.5 rounded-md bg-zinc-800/80 text-zinc-200 border border-white/10">
-                {t.header.z2} {Math.round(maxHr * 0.70)}-{thresholdHr - 11}
-              </span>
-              <span className="px-2 py-0.5 rounded-md bg-zinc-800/80 text-zinc-200 border border-white/10">
-                {t.header.z3} {thresholdHr - 10}-{thresholdHr - 1}
-              </span>
-              <span className="px-2 py-0.5 rounded-md bg-zinc-800/80 text-zinc-200 border border-white/10">
-                {t.header.z4} {thresholdHr}-{Math.round(maxHr * 0.94)}
-              </span>
-              <span className="px-2 py-0.5 rounded-md bg-zinc-800/80 text-zinc-200 border border-white/10">
-                {t.header.z5} &gt;{Math.round(maxHr * 0.94)}
-              </span>
+            <div className="pt-3 border-t border-white/5 space-y-2">
+              {maxHr && lt1Hr && thresholdHr ? (
+                <div className="flex flex-wrap items-center gap-2 text-[11px] tabular-nums">
+                  <span className="text-zinc-400 uppercase tracking-wider flex items-center gap-1 font-medium">
+                    <Gauge className="w-3.5 h-3.5 text-emerald-500" /> {t.header.hrZones}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-zinc-800/80 text-zinc-200 border border-white/10">
+                    {t.header.z1} &lt;{Math.round(maxHr * 0.7)}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-zinc-800/80 text-zinc-200 border border-white/10">
+                    {t.header.z2} {Math.round(maxHr * 0.7)}-{lt1Hr}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-zinc-800/80 text-zinc-200 border border-white/10">
+                    {t.header.z3} {lt1Hr + 1}-{thresholdHr - 1}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-zinc-800/80 text-zinc-200 border border-white/10">
+                    {t.header.z4} {thresholdHr}-{Math.round(maxHr * 0.94)}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-zinc-800/80 text-zinc-200 border border-white/10">
+                    {t.header.z5} &gt;{Math.round(maxHr * 0.94)}
+                  </span>
+                </div>
+              ) : (
+                <div className="text-xs text-zinc-400 flex items-center gap-2">
+                  <Gauge className="w-3.5 h-3.5 text-zinc-400" />
+                  <span>{t.header.waitingHrSensor}</span>
+                </div>
+              )}
+
+              {thresholds && !thresholds.isCalibrated && thresholdHr !== null && (
+                <p className="text-[11px] text-zinc-400">
+                  {t.header.calibrationHint}{" "}
+                  <button
+                    type="button"
+                    onClick={() => window.dispatchEvent(new CustomEvent("pacepulse:open-settings"))}
+                    className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2 font-medium"
+                  >
+                    {t.header.calibrationSettingsLink}
+                  </button>
+                </p>
+              )}
             </div>
           </div>
 

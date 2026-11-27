@@ -34,6 +34,7 @@ interface StravaActivity {
   average_cadence?: number;
   total_elevation_gain?: number;
   start_latlng?: [number, number] | null;
+  workout_type?: number | null;
   gear_id?: string | null;
   gear?: { id: string; name: string } | null;
   splits_metric?: SplitMetric[];
