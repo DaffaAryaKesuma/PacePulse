@@ -214,6 +214,7 @@ export async function GET(request: NextRequest) {
         targetRaceDate: targetUser.targetRaceDate ? targetUser.targetRaceDate.toISOString() : null,
         isPublic: targetUser.isPublic,
         preferredLanguage: targetUser.preferredLanguage,
+        retiredGearNames: targetUser.retiredGearNames ?? [],
       },
     });
   } catch (error) {

@@ -67,7 +67,26 @@ export async function POST(request: NextRequest) {
     try {
       const athleteProfile = await fetchStravaAthlete(accessToken);
       const shoes = athleteProfile.shoes ?? [];
+      const bikes = athleteProfile.bikes ?? [];
       totalGear = shoes.length;
+
+      // Collect retired gear names from Strava and merge with existing retiredGearNames
+      const stravaRetired = [...shoes, ...bikes]
+        .filter((g) => g.retired === true && g.name)
+        .map((g) => g.name.trim());
+
+      if (stravaRetired.length > 0) {
+        const existingRetired = user.retiredGearNames ?? [];
+        const mergedMap = new Map<string, string>();
+        for (const name of [...existingRetired, ...stravaRetired]) {
+          const clean = name.trim();
+          if (clean) mergedMap.set(clean.toLowerCase(), clean);
+        }
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { retiredGearNames: Array.from(mergedMap.values()) },
+        });
+      }
 
       await Promise.all(
         shoes

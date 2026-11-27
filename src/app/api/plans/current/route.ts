@@ -31,6 +31,8 @@ export async function GET() {
         resolvedPhase,
         goalDistance: user.goalDistance ?? null,
         goalTimeSec: user.goalTimeSec ?? null,
+        availableRunDays: user.availableRunDays ?? ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"],
+        preferredLongRunDay: user.preferredLongRunDay ?? null,
       });
     }
 
@@ -51,6 +53,8 @@ export async function GET() {
       resolvedPhase,
       goalDistance: user.goalDistance ?? null,
       goalTimeSec: user.goalTimeSec ?? null,
+      availableRunDays: user.availableRunDays ?? ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"],
+      preferredLongRunDay: user.preferredLongRunDay ?? null,
     });
   } catch (err) {
     console.error("[GET /api/plans/current] Error:", err);

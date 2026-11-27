@@ -161,13 +161,18 @@ export function calculateAcwr(activities: ActivityData[]): AcwrMetrics {
  */
 export function calculateShoeMileage(
   activities: ActivityData[],
-  defaultMaxKm = 700
+  defaultMaxKm = 700,
+  retiredGearNames: string[] = []
 ): ShoeMileageItem[] {
+  const retiredSet = new Set(
+    retiredGearNames.map((n) => n.trim().toLowerCase()).filter(Boolean)
+  );
   const map = new Map<string, { meters: number; count: number }>();
 
   for (const act of activities) {
     const name = act.gearName?.trim();
     if (!name) continue;
+    if (retiredSet.has(name.toLowerCase())) continue;
     const prev = map.get(name) ?? { meters: 0, count: 0 };
     prev.meters += act.distanceMeters;
     prev.count += 1;

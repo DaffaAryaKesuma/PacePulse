@@ -46,11 +46,13 @@ interface StravaShoe {
   name: string;
   distance: number; // in meters
   primary?: boolean;
+  retired?: boolean;
 }
 
 interface StravaAthleteProfile {
   id: number;
   shoes?: StravaShoe[];
+  bikes?: StravaShoe[];
 }
 
 interface SplitMetric {

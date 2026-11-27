@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createSessionToken, setSessionCookie } from "@/lib/auth";
+import { fetchStravaAthlete } from "@/lib/strava";
 
 export const dynamic = "force-dynamic";
 
@@ -111,6 +112,30 @@ export async function GET(request: NextRequest) {
           isPublic: true,
         },
       });
+    }
+
+    // 2.5 Sync retired shoes/bikes from Strava athlete profile
+    try {
+      const athleteProfile = await fetchStravaAthlete(data.access_token);
+      const retiredFromStrava = [
+        ...(athleteProfile.shoes ?? []),
+        ...(athleteProfile.bikes ?? []),
+      ]
+        .filter((g) => g.retired === true && g.name)
+        .map((g) => g.name.trim());
+      if (retiredFromStrava.length > 0) {
+        const mergedMap = new Map<string, string>();
+        for (const name of [...(user.retiredGearNames ?? []), ...retiredFromStrava]) {
+          const clean = name.trim();
+          if (clean) mergedMap.set(clean.toLowerCase(), clean);
+        }
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { retiredGearNames: Array.from(mergedMap.values()) },
+        });
+      }
+    } catch {
+      // Non-blocking: will also sync on /api/activities/sync
     }
 
     // 3. Create session JWT and save in HTTP-only cookie

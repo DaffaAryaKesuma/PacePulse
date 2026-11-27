@@ -85,32 +85,69 @@ export default function SportsLabAnalyticsPage() {
     }
   };
 
+  const retiredGearNames = data?.athlete?.retiredGearNames ?? [];
+  const retiredSet = new Set(
+    retiredGearNames.map((n) => n.trim().toLowerCase()).filter(Boolean)
+  );
+
+  const handleToggleRetireShoe = async (shoeName: string, retire: boolean) => {
+    const cleanName = shoeName.trim();
+    if (!cleanName) return;
+    const nextList = retire
+      ? Array.from(new Set([...retiredGearNames, cleanName]))
+      : retiredGearNames.filter(
+          (n) => n.trim().toLowerCase() !== cleanName.toLowerCase()
+        );
+    try {
+      const res = await fetch("/api/user/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ retiredGearNames: nextList }),
+      });
+      if (res.ok) {
+        setData((prev) =>
+          prev && prev.athlete
+            ? {
+                ...prev,
+                athlete: { ...prev.athlete, retiredGearNames: nextList },
+              }
+            : prev
+        );
+        window.dispatchEvent(new CustomEvent("pacepulse:refresh"));
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   const activities = data?.activities ?? [];
   const vdotData = calculateVdotPredictor(activities);
   const acwr = calculateAcwr(activities);
-  const activityShoes = calculateShoeMileage(activities, 700);
+  const activityShoes = calculateShoeMileage(activities, 700, retiredGearNames);
   const sessionCountByGear = new Map(
     activityShoes.map((s) => [s.gearName.toLowerCase(), s.sessionCount])
   );
 
-  // Prefer authoritative Strava master Gear distances when available
+  // Prefer authoritative Strava master Gear distances when available (excluding retired)
   const shoes =
     data?.gears && data.gears.length > 0
-      ? data.gears.map((g) => {
-          const maxKm = 700;
-          const totalKm = Math.round(g.distanceKm * 10) / 10;
-          const percentage = Math.round((totalKm / maxKm) * 100);
-          const status: "ok" | "warning" | "replace" =
-            percentage >= 100 ? "replace" : percentage >= 85 ? "warning" : "ok";
-          return {
-            gearName: g.name,
-            totalKm,
-            sessionCount: sessionCountByGear.get(g.name.toLowerCase()) ?? 0,
-            maxKm,
-            percentage,
-            status,
-          };
-        })
+      ? data.gears
+          .filter((g) => !retiredSet.has(g.name.trim().toLowerCase()))
+          .map((g) => {
+            const maxKm = 700;
+            const totalKm = Math.round(g.distanceKm * 10) / 10;
+            const percentage = Math.round((totalKm / maxKm) * 100);
+            const status: "ok" | "warning" | "replace" =
+              percentage >= 100 ? "replace" : percentage >= 85 ? "warning" : "ok";
+            return {
+              gearName: g.name,
+              totalKm,
+              sessionCount: sessionCountByGear.get(g.name.toLowerCase()) ?? 0,
+              maxKm,
+              percentage,
+              status,
+            };
+          })
       : activityShoes;
 
   const acwrStyle = {
@@ -337,27 +374,61 @@ export default function SportsLabAnalyticsPage() {
                           />
                         </div>
 
-                        <div className="flex items-center justify-between text-[10px] text-zinc-500">
+                        <div className="flex items-center justify-between gap-2 text-[10px] text-zinc-500">
                           <span>
                             {shoe.sessionCount} {t.analyticsPage.shoeSessions} ({shoe.percentage}%)
                           </span>
-                          {shoe.status === "replace" ? (
-                            <span className="text-red-400 font-bold flex items-center gap-1">
-                              <AlertTriangle className="w-3 h-3" /> {t.analyticsPage.shoeReplace}
-                            </span>
-                          ) : shoe.status === "warning" ? (
-                            <span className="text-amber-400 font-bold flex items-center gap-1">
-                              <AlertTriangle className="w-3 h-3" /> {t.analyticsPage.shoeWarn}
-                            </span>
-                          ) : (
-                            <span className="text-emerald-400 flex items-center gap-1">
-                              <CheckCircle2 className="w-3 h-3" /> OK
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {shoe.status === "replace" ? (
+                              <span className="text-red-400 font-bold flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3" /> {t.analyticsPage.shoeReplace}
+                              </span>
+                            ) : shoe.status === "warning" ? (
+                              <span className="text-amber-400 font-bold flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3" /> {t.analyticsPage.shoeWarn}
+                              </span>
+                            ) : (
+                              <span className="text-emerald-400 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" /> OK
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => void handleToggleRetireShoe(shoe.gearName, true)}
+                              className="px-1.5 py-0.5 rounded bg-zinc-800/80 border border-white/10 text-zinc-300 hover:text-white hover:border-white/20 text-[10px] font-medium transition-colors"
+                            >
+                              {t.analyticsPage.retireShoe}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {retiredGearNames.length > 0 && (
+                <div className="pt-3 border-t border-white/10 space-y-2">
+                  <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">
+                    {t.analyticsPage.retiredShoesTitle} ({retiredGearNames.length})
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {retiredGearNames.map((name) => (
+                      <div
+                        key={name}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900 border border-white/10 text-[11px] text-zinc-400"
+                      >
+                        <span className="line-through">{name}</span>
+                        <button
+                          type="button"
+                          onClick={() => void handleToggleRetireShoe(name, false)}
+                          className="text-emerald-400 hover:text-emerald-300 font-semibold"
+                        >
+                          {t.analyticsPage.restoreShoe}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

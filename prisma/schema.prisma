@@ -33,6 +33,9 @@ model User {
   targetRaceDate     DateTime?
   isPublic           Boolean    @default(true)
   preferredLanguage  String       @default("id")
+  retiredGearNames   String[]     @default([])
+  availableRunDays   String[]     @default(["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"])
+  preferredLongRunDay String?
   activities         Activity[]
   weeklyPlans        WeeklyPlan[]
   gears              Gear[]

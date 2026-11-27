@@ -19,6 +19,9 @@ export interface AthleteInfo {
   targetRaceDate?: string | null;
   isPublic: boolean;
   preferredLanguage?: string;
+  retiredGearNames?: string[];
+  availableRunDays?: string[];
+  preferredLongRunDay?: string | null;
 }
 
 export type LifestyleTag = "poor_sleep" | "high_caffeine" | "heavy_legs" | "work_stress";

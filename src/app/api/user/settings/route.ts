@@ -26,6 +26,9 @@ export async function PATCH(request: NextRequest) {
       targetRaceDate?: string | null;
       isPublic?: boolean;
       preferredLanguage?: string;
+      retiredGearNames?: string[];
+      availableRunDays?: string[];
+      preferredLongRunDay?: string | null;
       username?: string;
     };
 
@@ -50,6 +53,36 @@ export async function PATCH(request: NextRequest) {
     if (typeof body.isPublic === "boolean") dataToUpdate.isPublic = body.isPublic;
     if (body.preferredLanguage === "id" || body.preferredLanguage === "en") {
       dataToUpdate.preferredLanguage = body.preferredLanguage;
+    }
+    if (Array.isArray(body.retiredGearNames)) {
+      const cleanedMap = new Map<string, string>();
+      for (const item of body.retiredGearNames) {
+        if (typeof item === "string") {
+          const trimmed = item.trim();
+          if (trimmed) cleanedMap.set(trimmed.toLowerCase(), trimmed);
+        }
+      }
+      dataToUpdate.retiredGearNames = Array.from(cleanedMap.values());
+    }
+    if (Array.isArray(body.availableRunDays)) {
+      const validDays = Array.from(
+        new Set(body.availableRunDays.filter((d): d is string => typeof d === "string" && d.trim().length > 0))
+      );
+      if (validDays.length < 2) {
+        return NextResponse.json(
+          { error: "Pilih minimal 2 hari lari aktif dalam seminggu." },
+          { status: 400 }
+        );
+      }
+      dataToUpdate.availableRunDays = validDays;
+    }
+    if (body.preferredLongRunDay !== undefined) {
+      const longDay = body.preferredLongRunDay?.trim() || null;
+      dataToUpdate.preferredLongRunDay = longDay;
+      if (longDay && Array.isArray(dataToUpdate.availableRunDays)) {
+        const list = dataToUpdate.availableRunDays as string[];
+        if (!list.includes(longDay)) list.push(longDay);
+      }
     }
 
     // Handle username update with validation & uniqueness
@@ -95,6 +128,9 @@ export async function PATCH(request: NextRequest) {
         targetRaceDate: updated.targetRaceDate ? updated.targetRaceDate.toISOString() : null,
         isPublic: updated.isPublic,
         preferredLanguage: updated.preferredLanguage,
+        retiredGearNames: updated.retiredGearNames ?? [],
+        availableRunDays: updated.availableRunDays ?? ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"],
+        preferredLongRunDay: updated.preferredLongRunDay ?? null,
       },
     });
   } catch (err) {

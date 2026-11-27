@@ -21,6 +21,7 @@ import {
   Bot,
   ShieldCheck,
   Target,
+  Lock,
 } from "lucide-react";
 import { LanguageToggle, useLanguage } from "@/components/LanguageProvider";
 import {
@@ -38,9 +39,21 @@ interface PlanApiResponse {
   resolvedPhase?: ResolvedTrainingPhase;
   goalDistance?: string | null;
   goalTimeSec?: number | null;
+  availableRunDays?: string[];
+  preferredLongRunDay?: string | null;
   error?: string;
   details?: string;
 }
+
+const WEEK_DAY_OPTIONS = [
+  { key: "Senin", labelId: "Senin", labelEn: "Mon" },
+  { key: "Selasa", labelId: "Selasa", labelEn: "Tue" },
+  { key: "Rabu", labelId: "Rabu", labelEn: "Wed" },
+  { key: "Kamis", labelId: "Kamis", labelEn: "Thu" },
+  { key: "Jumat", labelId: "Jumat", labelEn: "Fri" },
+  { key: "Sabtu", labelId: "Sabtu", labelEn: "Sat" },
+  { key: "Minggu", labelId: "Minggu", labelEn: "Sun" },
+] as const;
 
 export default function TrainingPlanPage() {
   const router = useRouter();
@@ -50,6 +63,10 @@ export default function TrainingPlanPage() {
   const [vdot, setVdot] = useState<number | null>(null);
   const [resolvedPhase, setResolvedPhase] = useState<ResolvedTrainingPhase | null>(null);
   const [goalDistance, setGoalDistance] = useState<string | null | undefined>(undefined);
+  const [availableRunDays, setAvailableRunDays] = useState<string[]>(
+    WEEK_DAY_OPTIONS.map((d) => d.key)
+  );
+  const [preferredLongRunDay, setPreferredLongRunDay] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [rescheduling, setRescheduling] = useState(false);
@@ -75,6 +92,12 @@ export default function TrainingPlanPage() {
         setVdot(json.vdot);
         setResolvedPhase(json.resolvedPhase ?? null);
         setGoalDistance(json.goalDistance ?? null);
+        if (json.availableRunDays && json.availableRunDays.length >= 2) {
+          setAvailableRunDays(json.availableRunDays);
+        }
+        if (json.preferredLongRunDay !== undefined) {
+          setPreferredLongRunDay(json.preferredLongRunDay);
+        }
         if (
           json.goalDistance === "5K" ||
           json.goalDistance === "10K" ||
@@ -105,15 +128,48 @@ export default function TrainingPlanPage() {
     return () => window.removeEventListener("pacepulse:refresh", onRefresh);
   }, [loadPlan]);
 
+  const toggleRunDay = (dayKey: string) => {
+    setError(null);
+    setAvailableRunDays((prev) => {
+      if (prev.includes(dayKey)) {
+        if (prev.length <= 2) {
+          setError(t.planPage.minTwoDaysError);
+          return prev;
+        }
+        if (preferredLongRunDay === dayKey) {
+          setPreferredLongRunDay(null);
+        }
+        return prev.filter((d) => d !== dayKey);
+      }
+      return [...prev, dayKey];
+    });
+  };
+
+  const handleLongRunDayChange = (val: string) => {
+    const nextLong = val || null;
+    setPreferredLongRunDay(nextLong);
+    if (nextLong && !availableRunDays.includes(nextLong)) {
+      setAvailableRunDays((prev) => [...prev, nextLong]);
+    }
+  };
+
   const handleGenerate = async () => {
     if (generating) return;
+    if (availableRunDays.length < 2) {
+      setError(t.planPage.minTwoDaysError);
+      return;
+    }
     setGenerating(true);
     setError(null);
     try {
       const res = await fetch("/api/plans/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ language }),
+        body: JSON.stringify({
+          language,
+          availableRunDays,
+          preferredLongRunDay,
+        }),
       });
       const json = (await res.json()) as PlanApiResponse;
       if (res.ok && json.plan) {
@@ -241,7 +297,7 @@ export default function TrainingPlanPage() {
             type="button"
             onClick={() => void handleGenerate()}
             disabled={generating || rescheduling}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs transition-all shadow-lg shadow-none disabled:opacity-50 shrink-0"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-xs transition-colors disabled:opacity-50 shrink-0"
           >
             {generating ? (
               <>
@@ -263,6 +319,64 @@ export default function TrainingPlanPage() {
             <span>{error}</span>
           </div>
         )}
+
+        {/* Preferensi Hari Lari & Long Run */}
+        <div className="bg-[#111114] border border-white/10 rounded-xl p-4 sm:p-5 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 className="text-sm font-semibold text-zinc-200">
+                {t.planPage.schedulePrefsTitle}
+              </h2>
+              <p className="text-xs text-zinc-400">
+                {t.planPage.schedulePrefsDesc}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <label className="text-xs text-zinc-400 whitespace-nowrap">
+                {t.planPage.longRunDayLabel}
+              </label>
+              <select
+                value={preferredLongRunDay ?? ""}
+                onChange={(e) => handleLongRunDayChange(e.target.value)}
+                className="bg-[#09090B] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-zinc-100 focus:outline-none focus:border-emerald-500/50"
+              >
+                <option value="">{t.planPage.longRunAuto}</option>
+                {WEEK_DAY_OPTIONS.map((d) => (
+                  <option key={d.key} value={d.key}>
+                    {language === "id" ? d.labelId : d.labelEn}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {WEEK_DAY_OPTIONS.map((d) => {
+              const active = availableRunDays.includes(d.key);
+              const isLong = preferredLongRunDay === d.key;
+              return (
+                <button
+                  key={d.key}
+                  type="button"
+                  onClick={() => toggleRunDay(d.key)}
+                  className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                    active
+                      ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400"
+                      : "bg-[#09090B] border-white/10 text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  {!active && <Lock className="w-3 h-3" />}
+                  <span>{language === "id" ? d.labelId : d.labelEn}</span>
+                  {isLong && (
+                    <span className="px-1.5 py-0.2 rounded bg-zinc-800 text-[10px] text-zinc-200 border border-white/10">
+                      LR
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {plan?.rescheduleNote && (
           <div className="p-3.5 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-300 text-xs font-sans flex items-center gap-2">
@@ -331,19 +445,30 @@ export default function TrainingPlanPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
-            {plan.days.map((day, idx) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            {plan.days.map((day, idx) => {
+              const dayOption = WEEK_DAY_OPTIONS[idx];
+              const isLockedRest =
+                dayOption && !availableRunDays.includes(dayOption.key) && day.intensity === "rest";
+              const isLockedLong =
+                dayOption && preferredLongRunDay === dayOption.key && day.intensity === "long";
+              return (
               <div
                 key={`${day.day}-${idx}`}
-                className="bg-[#111114] border border-white/10 rounded-2xl p-4 flex flex-col justify-between gap-3 hover:border-zinc-600 transition-colors"
+                className="bg-[#111114] border border-white/10 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-white/20 transition-colors"
               >
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold font-sans text-zinc-400 uppercase tracking-wider">
-                      {day.day}
+                    <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
+                      <span>{day.day}</span>
+                      {(isLockedRest || isLockedLong) && (
+                        <span title={t.planPage.lockedLabel}>
+                          <Lock className="w-3 h-3 text-emerald-500" />
+                        </span>
+                      )}
                     </span>
                     <span
-                      className={`px-2 py-0.5 rounded-full border text-[10px] font-sans font-bold uppercase ${intensityBadge(day.intensity)}`}
+                      className={`px-2 py-0.5 rounded-md border text-[10px] font-semibold uppercase bg-zinc-800/80 text-zinc-200 border-white/10`}
                     >
                       {day.sessionType}
                     </span>
@@ -390,7 +515,8 @@ export default function TrainingPlanPage() {
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

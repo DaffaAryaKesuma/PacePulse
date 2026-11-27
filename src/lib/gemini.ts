@@ -411,6 +411,8 @@ export interface PlanGenerationContext {
   deloadTriggered: boolean;
   shoes: string[];
   recentRuns: RecentRunSummary[];
+  availableRunDays?: string[];
+  preferredLongRunDay?: string | null;
   language: "id" | "en";
 }
 
@@ -444,12 +446,106 @@ function extractPlanPayload(raw: string): {
   throw new Error("Invalid WeeklyPlan JSON format from Gemini");
 }
 
+const DAY_NAME_INDEX_MAP: Record<string, number> = {
+  senin: 0,
+  monday: 0,
+  selasa: 1,
+  tuesday: 1,
+  rabu: 2,
+  wednesday: 2,
+  kamis: 3,
+  thursday: 3,
+  jumat: 4,
+  friday: 4,
+  sabtu: 5,
+  saturday: 5,
+  minggu: 6,
+  sunday: 6,
+};
+
+function resolveAllowedDayIndices(ctx: PlanGenerationContext): Set<number> {
+  if (!ctx.availableRunDays || ctx.availableRunDays.length === 0) {
+    return new Set([0, 1, 2, 3, 4, 5, 6]);
+  }
+  const indices = new Set<number>();
+  for (const d of ctx.availableRunDays) {
+    const idx = DAY_NAME_INDEX_MAP[d.trim().toLowerCase()];
+    if (idx !== undefined) indices.add(idx);
+  }
+  if (ctx.preferredLongRunDay) {
+    const longIdx = DAY_NAME_INDEX_MAP[ctx.preferredLongRunDay.trim().toLowerCase()];
+    if (longIdx !== undefined) indices.add(longIdx);
+  }
+  return indices.size >= 2 ? indices : new Set([0, 1, 2, 3, 4, 5, 6]);
+}
+
+function resolvePreferredLongIdx(ctx: PlanGenerationContext): number | null {
+  if (!ctx.preferredLongRunDay) return null;
+  const idx = DAY_NAME_INDEX_MAP[ctx.preferredLongRunDay.trim().toLowerCase()];
+  return idx !== undefined ? idx : null;
+}
+
 function enforcePlanGuardrails(
   days: WeeklyPlanDay[],
   ctx: PlanGenerationContext
 ): WeeklyPlanDay[] {
   const isId = ctx.language === "id";
   const result = days.map((d) => ({ ...d }));
+  const allowedIndices = resolveAllowedDayIndices(ctx);
+  const preferredLongIdx = resolvePreferredLongIdx(ctx);
+
+  // 0a. Hard Lock: Any day outside availableRunDays MUST be Rest (0 km)
+  for (let i = 0; i < result.length; i++) {
+    if (!allowedIndices.has(i)) {
+      result[i] = {
+        ...result[i],
+        sessionType: "Rest",
+        distanceKm: 0,
+        targetPace: "-",
+        hrCap: "-",
+        shoe: "-",
+        rationale: isId
+          ? "Hari istirahat terkunci sesuai preferensi jadwal lari Anda."
+          : "Locked rest day per your weekly running availability.",
+        literatureCitation: "Stephen Seiler (Polarized 80/20 Model)",
+        intensity: "rest",
+      };
+    }
+  }
+
+  // 0b. Hard Lock: If preferredLongRunDay is set, that day MUST be Long Run
+  if (preferredLongIdx !== null && result[preferredLongIdx]) {
+    const dailyShoe =
+      ctx.shoes.find((s) => s.toLowerCase().includes("novablast")) ||
+      ctx.shoes[0] ||
+      "ASICS Novablast 5";
+    const defaultLongKm = Math.max(5, Math.round(ctx.maxSafeWeeklyKm * 0.34 * 10) / 10);
+
+    // Demote any other day marked as "long" to Easy Run
+    for (let i = 0; i < result.length; i++) {
+      if (i !== preferredLongIdx && result[i].intensity === "long") {
+        result[i] = {
+          ...result[i],
+          sessionType: "Easy Run",
+          hrCap: `≤ ${ctx.lt1Hr} bpm`,
+          intensity: "easy",
+          literatureCitation: "Stephen Seiler (Polarized 80/20 Model)",
+        };
+      }
+    }
+
+    const current = result[preferredLongIdx];
+    result[preferredLongIdx] = {
+      ...current,
+      sessionType: "Long Run",
+      distanceKm: current.distanceKm > 0 ? current.distanceKm : defaultLongKm,
+      hrCap: `≤ ${ctx.lt1Hr} bpm`,
+      shoe: current.shoe && current.shoe !== "-" ? current.shoe : dailyShoe,
+      intensity: "long",
+      literatureCitation:
+        current.literatureCitation || "Pete Pfitzinger's Faster Road Racing",
+    };
+  }
 
   // 1. Deload guardrail: no "hard" intervals/tempo when deloadTriggered
   if (ctx.deloadTriggered) {
@@ -457,7 +553,7 @@ function enforcePlanGuardrails(
       if (result[i].intensity === "hard") {
         result[i] = {
           ...result[i],
-          sessionType: isId ? "Easy Recovery Run" : "Easy Recovery Run",
+          sessionType: "Easy Recovery Run",
           hrCap: `≤ ${ctx.lt1Hr} bpm`,
           intensity: "easy",
           literatureCitation: "Pete Pfitzinger's Faster Road Racing",
@@ -473,8 +569,10 @@ function enforcePlanGuardrails(
     const currHeavy =
       result[i].intensity === "hard" || result[i].intensity === "long";
     if (prevHeavy && currHeavy) {
-      result[i] = {
-        ...result[i],
+      // Preserve preferredLongIdx if one of the two is the locked Long Run
+      const demoteIdx = i - 1 === preferredLongIdx ? i : i === preferredLongIdx ? i - 1 : i;
+      result[demoteIdx] = {
+        ...result[demoteIdx],
         sessionType: "Easy Run",
         hrCap: `≤ ${ctx.lt1Hr} bpm`,
         intensity: "easy",
@@ -550,6 +648,11 @@ export async function generateWeeklyPlanWithGemini(
           .join("\n")
       : "No recent runs recorded.";
 
+  const allowedIndices = resolveAllowedDayIndices(ctx);
+  const allDayNames = ["Senin/Monday", "Selasa/Tuesday", "Rabu/Wednesday", "Kamis/Thursday", "Jumat/Friday", "Sabtu/Saturday", "Minggu/Sunday"];
+  const allowedDayList = Array.from(allowedIndices).sort().map((i) => allDayNames[i]).join(", ");
+  const lockedRestList = allDayNames.filter((_, i) => !allowedIndices.has(i)).join(", ") || "None";
+
   const systemPrompt = `You are an elite endurance running coach.
 ${getSportsScienceSystemContext()}
 
@@ -561,6 +664,12 @@ ATHLETE PHYSIOLOGY & WORKLOAD CONTEXT:
 - Workload: ACWR = ${ctx.acwrRatio} (${ctx.acwrStatus}) | Acute 7d = ${ctx.acuteKm} km | Chronic 28d avg = ${ctx.chronicWeeklyAvgKm} km/wk
 - STRICT MAX SAFE VOLUME CAP: ${ctx.maxSafeWeeklyKm} km/week (${ctx.deloadTriggered ? "DELOAD TRIGGERED: -20% volume & NO heavy intervals" : "Jack Daniels 10% progression cap"})
 - Available Shoes (Gear): ${shoeList}
+
+HARD SCHEDULE CONSTRAINTS (MUST OBEY):
+- Available Running Days: ${allowedDayList}
+- Locked REST Days (MUST be "Rest", distanceKm: 0, intensity: "rest"): ${lockedRestList}
+- Preferred Long Run Day: ${ctx.preferredLongRunDay ? `${ctx.preferredLongRunDay} (MUST be "Long Run", intensity: "long")` : "Auto (coach decides)"}
+- Distribute the weekly target volume and any Quality/Threshold/Interval sessions ONLY across the Available Running Days, leaving safe recovery spacing around the Long Run day.
 
 LAST 7 RUNS:
 ${recentRunsText}
@@ -718,56 +827,84 @@ function buildDeterministicWeeklyPlan(
         intensity: "hard" as const,
       };
 
-  const rawDays: WeeklyPlanDay[] = [
-    {
-      day: days[0],
-      sessionType: "Rest",
-      distanceKm: 0,
-      targetPace: "-",
-      hrCap: "-",
-      shoe: "-",
-      rationale: isId
-        ? `Pemulihan total awal pekan untuk menjaga ACWR (${ctx.acwrRatio}) tetap aman.`
-        : `Full recovery day to keep ACWR (${ctx.acwrRatio}) in a safe zone.`,
-      literatureCitation: "Pete Pfitzinger's Faster Road Racing",
-      intensity: "rest",
-    },
-    ctx.deloadTriggered
-      ? {
-          day: days[1],
-          sessionType: "Easy Run",
-          distanceKm: qualityDist,
-          targetPace: easyPace,
-          hrCap: `≤ ${ctx.lt1Hr} bpm`,
-          shoe: dailyShoe,
-          rationale: isId
-            ? "Deload aktif: interval diganti lari aerobik ringan untuk memulihkan sistem saraf."
-            : "Deload active: intervals replaced with easy aerobic run to restore freshness.",
-          literatureCitation: "Stephen Seiler (Polarized 80/20 Model)",
-          intensity: "easy",
-        }
-      : {
-          day: days[1],
-          ...qualitySession,
-          distanceKm: qualityDist,
-        },
-    {
-      day: days[2],
-      sessionType: "Rest",
-      distanceKm: 0,
-      targetPace: "-",
-      hrCap: "-",
-      shoe: "-",
-      rationale: isId
-        ? "Jeda istirahat penuh agar adaptasi otot dan pemulihan glikogen optimal."
-        : "Full rest day for muscular repair and glycogen restoration.",
-      literatureCitation: "Stephen Seiler (Polarized 80/20 Model)",
-      intensity: "rest",
-    },
-    {
-      day: days[3],
+  const allowedIndices = resolveAllowedDayIndices(ctx);
+  const preferredLongIdx = resolvePreferredLongIdx(ctx);
+  const sortedAllowed = Array.from(allowedIndices).sort((a, b) => a - b);
+  const longIdx = preferredLongIdx !== null ? preferredLongIdx : sortedAllowed[sortedAllowed.length - 1];
+
+  // Pick a quality day from available days that is not adjacent to longIdx if possible
+  const nonLongAllowed = sortedAllowed.filter((i) => i !== longIdx);
+  const qualityIdx =
+    nonLongAllowed.find((i) => Math.abs(i - longIdx) >= 2 && Math.abs(i - longIdx) <= 5) ??
+    nonLongAllowed[0] ??
+    null;
+
+  const easyIndices = nonLongAllowed.filter((i) => i !== qualityIdx);
+  const easyCount = Math.max(1, easyIndices.length);
+  const dynamicEasyDist = Math.max(
+    2.5,
+    Math.round(((budget - longDist - (qualityIdx !== null ? qualityDist : 0)) / easyCount) * 10) / 10
+  );
+
+  const rawDays: WeeklyPlanDay[] = days.map((dayName, idx) => {
+    if (!allowedIndices.has(idx)) {
+      return {
+        day: dayName,
+        sessionType: "Rest",
+        distanceKm: 0,
+        targetPace: "-",
+        hrCap: "-",
+        shoe: "-",
+        rationale: isId
+          ? "Hari istirahat terkunci sesuai preferensi jadwal lari Anda."
+          : "Locked rest day per your weekly running availability.",
+        literatureCitation: "Stephen Seiler (Polarized 80/20 Model)",
+        intensity: "rest",
+      };
+    }
+
+    if (idx === longIdx) {
+      return {
+        day: dayName,
+        sessionType: "Long Run",
+        distanceKm: longDist,
+        targetPace: longPace,
+        hrCap: `≤ ${ctx.lt1Hr} bpm`,
+        shoe: dailyShoe,
+        rationale: isId
+          ? "Membangun daya tahan aerobik sambil menjaga cardiac drift di bawah 5%."
+          : "Builds aerobic endurance while keeping cardiac drift below 5%.",
+        literatureCitation: "Pete Pfitzinger's Faster Road Racing",
+        intensity: "long",
+      };
+    }
+
+    if (idx === qualityIdx) {
+      return ctx.deloadTriggered
+        ? {
+            day: dayName,
+            sessionType: "Easy Run",
+            distanceKm: qualityDist,
+            targetPace: easyPace,
+            hrCap: `≤ ${ctx.lt1Hr} bpm`,
+            shoe: dailyShoe,
+            rationale: isId
+              ? "Deload aktif: interval diganti lari aerobik ringan untuk memulihkan sistem saraf."
+              : "Deload active: intervals replaced with easy aerobic run to restore freshness.",
+            literatureCitation: "Stephen Seiler (Polarized 80/20 Model)",
+            intensity: "easy",
+          }
+        : {
+            day: dayName,
+            ...qualitySession,
+            distanceKm: qualityDist,
+          };
+    }
+
+    return {
+      day: dayName,
       sessionType: "Easy Run",
-      distanceKm: easyDist,
+      distanceKm: dynamicEasyDist,
       targetPace: easyPace,
       hrCap: `≤ ${ctx.lt1Hr} bpm`,
       shoe: dailyShoe,
@@ -776,47 +913,8 @@ function buildDeterministicWeeklyPlan(
         : "Zone 2 aerobic run building mitochondrial density and capillarization.",
       literatureCitation: "Jack Daniels' Running Formula",
       intensity: "easy",
-    },
-    {
-      day: days[4],
-      sessionType: "Rest",
-      distanceKm: 0,
-      targetPace: "-",
-      hrCap: "-",
-      shoe: "-",
-      rationale: isId
-        ? "Rotasi istirahat menjaga kesegaran kaki sebelum volume akhir pekan."
-        : "Strategic rest preserving leg freshness ahead of weekend volume.",
-      literatureCitation: "Malisoux et al. (2015, Scand. J. Med. Sci. Sports)",
-      intensity: "rest",
-    },
-    {
-      day: days[5],
-      sessionType: "Easy Run",
-      distanceKm: easyDist,
-      targetPace: easyPace,
-      hrCap: `≤ ${ctx.lt1Hr} bpm`,
-      shoe: dailyShoe,
-      rationale: isId
-        ? "Menjaga kontinuitas aerobik dengan rotasi sepatu bantalan harian."
-        : "Maintains aerobic consistency with daily cushioned shoe rotation.",
-      literatureCitation: "Malisoux et al. (2015, Scand. J. Med. Sci. Sports)",
-      intensity: "easy",
-    },
-    {
-      day: days[6],
-      sessionType: "Long Run",
-      distanceKm: longDist,
-      targetPace: longPace,
-      hrCap: `≤ ${ctx.lt1Hr} bpm`,
-      shoe: dailyShoe,
-      rationale: isId
-        ? "Membangun daya tahan aerobik sambil menjaga cardiac drift di bawah 5%."
-        : "Builds aerobic endurance while keeping cardiac drift below 5%.",
-      literatureCitation: "Pete Pfitzinger's Faster Road Racing",
-      intensity: "long",
-    },
-  ];
+    };
+  });
 
   const safeDays = enforcePlanGuardrails(rawDays, ctx);
   return {

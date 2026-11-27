@@ -43,6 +43,14 @@ export function AthleteSettingsModal({
     athlete.manualThresholdPace ? (athlete.manualThresholdPace % 60).toString().padStart(2, "0") : ""
   );
   const [trainingPhase, setTrainingPhase] = useState(athlete.trainingPhase || "auto");
+  const [availableRunDays, setAvailableRunDays] = useState<string[]>(
+    athlete.availableRunDays && athlete.availableRunDays.length >= 2
+      ? athlete.availableRunDays
+      : ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
+  );
+  const [preferredLongRunDay, setPreferredLongRunDay] = useState<string>(
+    athlete.preferredLongRunDay || ""
+  );
   const [targetRaceDate, setTargetRaceDate] = useState(
     athlete.targetRaceDate ? athlete.targetRaceDate.split("T")[0] : ""
   );
@@ -91,6 +99,8 @@ export function AthleteSettingsModal({
       manualLt2Hr: manualLt2Hr ? parseInt(manualLt2Hr, 10) : null,
       manualThresholdPace: calculatedManualPace,
       trainingPhase,
+      availableRunDays,
+      preferredLongRunDay: preferredLongRunDay || null,
       targetRaceDate: targetRaceDate || null,
       isPublic,
       username: username.trim(),
@@ -381,6 +391,58 @@ export function AthleteSettingsModal({
                     />
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Preferensi Hari Lari & Long Run */}
+            <div className="pt-2 border-t border-white/5 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label className="text-zinc-400 font-medium">{t.planPage.schedulePrefsTitle}</label>
+                <select
+                  value={preferredLongRunDay}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setPreferredLongRunDay(val);
+                    if (val && !availableRunDays.includes(val)) {
+                      setAvailableRunDays((prev) => [...prev, val]);
+                    }
+                  }}
+                  className="bg-[#111114] border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-emerald-500/50"
+                >
+                  <option value="">{t.planPage.longRunAuto}</option>
+                  {["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"].map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"].map((d) => {
+                  const active = availableRunDays.includes(d);
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => {
+                        if (active) {
+                          if (availableRunDays.length <= 2) return;
+                          if (preferredLongRunDay === d) setPreferredLongRunDay("");
+                          setAvailableRunDays((prev) => prev.filter((x) => x !== d));
+                        } else {
+                          setAvailableRunDays((prev) => [...prev, d]);
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors ${
+                        active
+                          ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400"
+                          : "bg-[#111114] border-white/10 text-zinc-500"
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

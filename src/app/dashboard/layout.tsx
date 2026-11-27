@@ -321,7 +321,7 @@ export default function DashboardLayout({
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
-                <span className="text-[10px] font-medium truncate max-w-[72px]">
+                <span className="text-[10px] font-medium truncate max-w-18">
                   {item.label}
                 </span>
               </Link>

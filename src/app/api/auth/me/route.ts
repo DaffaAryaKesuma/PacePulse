@@ -30,6 +30,9 @@ export async function GET() {
       targetRaceDate: user.targetRaceDate ? user.targetRaceDate.toISOString() : null,
       isPublic: user.isPublic,
       preferredLanguage: user.preferredLanguage,
+      retiredGearNames: user.retiredGearNames ?? [],
+      availableRunDays: user.availableRunDays ?? ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"],
+      preferredLongRunDay: user.preferredLongRunDay ?? null,
       createdAt: user.createdAt.toISOString(),
     },
   });

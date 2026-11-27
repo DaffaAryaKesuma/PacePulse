@@ -44,10 +44,17 @@ export async function buildUserPlanContext(user: User): Promise<{
   const vdotResult = calculateVdotPredictor(activities);
   const acwr = calculateAcwr(activities);
   const resolvedPhase = resolveActiveTrainingPhase(user, activities, acwr);
+  const retiredSet = new Set(
+    (user.retiredGearNames ?? []).map((n) => n.trim().toLowerCase()).filter(Boolean)
+  );
   const shoes =
     dbGears.length > 0
-      ? dbGears.map((g) => g.name)
-      : calculateShoeMileage(activities).map((s) => s.gearName);
+      ? dbGears
+          .map((g) => g.name)
+          .filter((name) => !retiredSet.has(name.trim().toLowerCase()))
+      : calculateShoeMileage(activities, 700, user.retiredGearNames ?? []).map(
+          (s) => s.gearName
+        );
 
   const thresholds = resolvePhysiologicalThresholds(user, activities);
   const maxHr = thresholds.peakHr || 190;
@@ -109,6 +116,11 @@ export async function buildUserPlanContext(user: User): Promise<{
     deloadTriggered,
     shoes,
     recentRuns,
+    availableRunDays:
+      user.availableRunDays && user.availableRunDays.length >= 2
+        ? user.availableRunDays
+        : ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"],
+    preferredLongRunDay: user.preferredLongRunDay ?? null,
     language: user.preferredLanguage === "en" ? "en" : "id",
   };
 
