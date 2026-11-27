@@ -199,6 +199,7 @@ function CoachChatInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activityIdParam = searchParams.get("activityId");
+  const promptParam = searchParams.get("prompt");
   const { language, setLanguage, t } = useLanguage();
 
   const [conversations, setConversations] = useState<CoachConversationItem[]>([]);
@@ -264,6 +265,12 @@ function CoachChatInner() {
   useEffect(() => {
     void loadCoachState(null, activityIdParam);
   }, [loadCoachState, activityIdParam]);
+
+  useEffect(() => {
+    if (promptParam) {
+      setInput(promptParam);
+    }
+  }, [promptParam]);
 
   const handleSelectConversation = (id: string) => {
     setMobileSidebarOpen(false);

@@ -24,6 +24,7 @@ import {
   Lock,
 } from "lucide-react";
 import { LanguageToggle, useLanguage } from "@/components/LanguageProvider";
+import WorkoutBreakdownModal from "@/components/WorkoutBreakdownModal";
 import {
   buildRaceDayStrategy,
   type RaceDistanceKey,
@@ -72,6 +73,7 @@ export default function TrainingPlanPage() {
   const [rescheduling, setRescheduling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [customReason, setCustomReason] = useState("");
+  const [selectedDay, setSelectedDay] = useState<WeeklyPlanDay | null>(null);
 
   // Race-Day Strategy Builder state
   const [raceDistance, setRaceDistance] = useState<RaceDistanceKey>("Half Marathon");
@@ -453,11 +455,13 @@ export default function TrainingPlanPage() {
               const isLockedLong =
                 dayOption && preferredLongRunDay === dayOption.key && day.intensity === "long";
               return (
-              <div
+              <button
                 key={`${day.day}-${idx}`}
-                className="bg-[#111114] border border-white/10 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-white/20 transition-colors"
+                type="button"
+                onClick={() => setSelectedDay(day)}
+                className="text-left bg-[#111114] border border-white/10 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-zinc-700 hover:bg-zinc-900/60 transition-colors cursor-pointer group"
               >
-                <div className="space-y-2.5">
+                <div className="space-y-2.5 w-full">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
                       <span>{day.day}</span>
@@ -474,7 +478,7 @@ export default function TrainingPlanPage() {
                     </span>
                   </div>
 
-                  <div className="flex items-baseline gap-1 font-sans">
+                  <div className="flex items-baseline gap-1 font-sans tabular-nums">
                     <span className="text-2xl font-black text-white">
                       {day.distanceKm > 0 ? day.distanceKm : "—"}
                     </span>
@@ -483,7 +487,7 @@ export default function TrainingPlanPage() {
                     )}
                   </div>
 
-                  <div className="space-y-1 text-[11px] font-sans text-zinc-400">
+                  <div className="space-y-1 text-[11px] font-sans text-zinc-400 tabular-nums">
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-3 h-3 text-emerald-400 shrink-0" />
                       <span className="truncate">{day.targetPace}</span>
@@ -503,18 +507,25 @@ export default function TrainingPlanPage() {
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-white/10/60 space-y-2">
+                <div className="pt-2 border-t border-white/10/60 space-y-2 w-full">
                   <p className="text-[11px] font-sans text-zinc-500 leading-relaxed">
                     {day.rationale}
                   </p>
-                  {day.literatureCitation && (
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#09090B] border border-white/10 text-[10px] font-sans text-zinc-400">
-                      <BookOpen className="w-3 h-3 text-emerald-400 shrink-0" />
-                      <span className="truncate">{day.literatureCitation}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center justify-between gap-2 flex-wrap pt-0.5">
+                    {day.literatureCitation ? (
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#09090B] border border-white/10 text-[10px] font-sans text-zinc-400 max-w-full">
+                        <BookOpen className="w-3 h-3 text-emerald-400 shrink-0" />
+                        <span className="truncate">{day.literatureCitation}</span>
+                      </div>
+                    ) : (
+                      <span />
+                    )}
+                    <span className="text-[11px] font-semibold text-emerald-500 group-hover:text-emerald-400 transition-colors ml-auto">
+                      {t.planPage.viewBreakdown} →
+                    </span>
+                  </div>
                 </div>
-              </div>
+              </button>
               );
             })}
           </div>
@@ -723,6 +734,11 @@ export default function TrainingPlanPage() {
           </div>
         </section>
       </main>
+
+      <WorkoutBreakdownModal
+        day={selectedDay}
+        onClose={() => setSelectedDay(null)}
+      />
     </div>
   );
 }

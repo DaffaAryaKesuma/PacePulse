@@ -119,6 +119,23 @@ export interface StravaWebhookEvent {
   updates?: Record<string, unknown>;
 }
 
+export type WorkoutStepType = "warmup" | "main" | "recovery" | "cooldown";
+
+export interface WorkoutBreakdownStep {
+  type: WorkoutStepType;
+  label: string;
+  distanceOrDuration: string;
+  targetPace: string;
+  targetHr: string;
+  notes: string;
+}
+
+export interface WorkoutBreakdown {
+  objective: string;
+  steps: WorkoutBreakdownStep[];
+  executionTips: string[];
+}
+
 export interface WeeklyPlanDay {
   day: string;
   sessionType: string;
@@ -129,6 +146,7 @@ export interface WeeklyPlanDay {
   rationale: string;
   literatureCitation?: string;
   intensity: "rest" | "easy" | "moderate" | "hard" | "long";
+  breakdown?: WorkoutBreakdown | null;
 }
 
 export interface WeeklyPlanData {

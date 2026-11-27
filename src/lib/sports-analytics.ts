@@ -3,6 +3,7 @@ import { formatDuration } from "./formatting";
 
 export interface VdotPrediction {
   vdot: number;
+  peakVdot: number;
   sourceActivityName: string;
   sourceDate: string;
   predictions: {
@@ -61,8 +62,9 @@ export function predictTimeSecForDistance(vdot: number, distanceMeters: number):
 }
 
 /**
- * Estimates Jack Daniels VDOT from the best qualifying run in the last 30 days
- * (falls back to all-time best qualifying run if none in the last 30 days).
+ * Estimates Jack Daniels VDOT from the best qualifying run in the last 42 days
+ * (Banister CTL fitness window, falling back to all-time best if none in 42 days).
+ * Also computes all-time peakVdot across all qualifying activities.
  */
 export function calculateVdotPredictor(activities: ActivityData[]): VdotPrediction | null {
   const qualifying = activities.filter(
@@ -70,9 +72,17 @@ export function calculateVdotPredictor(activities: ActivityData[]): VdotPredicti
   );
   if (qualifying.length === 0) return null;
 
-  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  let rawPeakVdot = 0;
+  for (const act of qualifying) {
+    const v = estimateVdotFromRun(act.distanceMeters, act.movingTimeSec);
+    if (v > rawPeakVdot && v < 85) {
+      rawPeakVdot = v;
+    }
+  }
+
+  const fortyTwoDaysAgo = Date.now() - 42 * 24 * 60 * 60 * 1000;
   const recent = qualifying.filter(
-    (a) => new Date(a.startDate).getTime() >= thirtyDaysAgo
+    (a) => new Date(a.startDate).getTime() >= fortyTwoDaysAgo
   );
   const pool = recent.length > 0 ? recent : qualifying;
 
@@ -90,9 +100,11 @@ export function calculateVdotPredictor(activities: ActivityData[]): VdotPredicti
   if (!bestActivity || bestVdot <= 0) return null;
 
   const roundedVdot = Math.round(bestVdot * 10) / 10;
+  const roundedPeakVdot = Math.max(roundedVdot, Math.round(rawPeakVdot * 10) / 10);
 
   return {
     vdot: roundedVdot,
+    peakVdot: roundedPeakVdot,
     sourceActivityName: bestActivity.name,
     sourceDate: bestActivity.startDate,
     predictions: {

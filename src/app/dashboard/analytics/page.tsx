@@ -20,6 +20,7 @@ import {
   calculateVdotPredictor,
   calculateAcwr,
   calculateShoeMileage,
+  predictTimeSecForDistance,
 } from "@/lib/sports-analytics";
 import { formatDuration } from "@/lib/formatting";
 import type { DashboardData, AthleteInfo, PersonalBestInfo } from "@/types";
@@ -222,8 +223,16 @@ export default function SportsLabAnalyticsPage() {
                   </p>
                 </div>
                 {vdotData && (
-                  <div className="px-2.5 py-1 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-400 font-sans text-xs font-black shrink-0">
-                    {vdotData.vdot}
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <div className="px-2.5 py-1 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-400 font-sans text-xs font-black tabular-nums">
+                      {vdotData.vdot}
+                    </div>
+                    {vdotData.peakVdot > vdotData.vdot && (
+                      <span className="text-[10px] font-sans font-semibold text-zinc-400 tabular-nums">
+                        {t.analyticsPage.vdotPeakLabel}{" "}
+                        <span className="text-amber-400">{vdotData.peakVdot}</span>
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -256,8 +265,33 @@ export default function SportsLabAnalyticsPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="text-[11px] font-sans text-zinc-500 truncate pt-1 border-t border-white/10/60">
-                    {t.analyticsPage.vdotSource} <span className="text-zinc-300">{vdotData.sourceActivityName}</span>
+                  <div className="pt-1 border-t border-white/10/60 space-y-1">
+                    <div className="text-[11px] font-sans text-zinc-500 truncate">
+                      {t.analyticsPage.vdotSource}{" "}
+                      <span className="text-zinc-300">{vdotData.sourceActivityName}</span>
+                    </div>
+                    {(() => {
+                      const pbDistMap: Record<string, number> = {
+                        "5K": 5000,
+                        "10K": 10000,
+                        HM: 21097.5,
+                        FM: 42195,
+                      };
+                      const hasFasterPb = (data?.personalBests ?? []).some((pb) => {
+                        const dist = pbDistMap[pb.distanceKey];
+                        return (
+                          dist &&
+                          pb.timeSeconds > 0 &&
+                          predictTimeSecForDistance(vdotData.vdot, dist) > pb.timeSeconds
+                        );
+                      });
+                      if (!hasFasterPb && vdotData.peakVdot <= vdotData.vdot) return null;
+                      return (
+                        <p className="text-[10px] font-sans text-zinc-500 leading-relaxed">
+                          {t.analyticsPage.vdotCalibrationNote}
+                        </p>
+                      );
+                    })()}
                   </div>
                 </>
               ) : (

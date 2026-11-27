@@ -1,7 +1,17 @@
 // Gemini AI integration for running analysis with Sports Science Knowledge Base
 import { getSportsScienceSystemContext } from "./sports-science-kb";
 import { formatDuration } from "./formatting";
+import {
+  buildFallbackWorkoutBreakdown,
+  sanitizeOrBuildBreakdown,
+} from "./workout-breakdown";
 import type { WeeklyPlanDay } from "@/types";
+
+const GEMINI_MODELS = [
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-flash-latest",
+] as const;
 
 interface SplitData {
   split: number;
@@ -125,7 +135,7 @@ export async function callGeminiMultiTurnWithFallback(
     throw new Error("GEMINI_API_KEY is not configured");
   }
 
-  const models = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+  const models = GEMINI_MODELS;
 
   let lastError: Error | null = null;
 
@@ -189,7 +199,7 @@ export async function streamGeminiMultiTurnWithFallback(
     throw new Error("GEMINI_API_KEY is not configured");
   }
 
-  const models = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+  const models = GEMINI_MODELS;
 
   let lastError: Error | null = null;
 
@@ -247,7 +257,7 @@ async function callGeminiWithFallback(
     throw new Error("GEMINI_API_KEY is not configured");
   }
 
-  const models = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+  const models = GEMINI_MODELS;
 
   let lastError: Error | null = null;
 
@@ -509,6 +519,7 @@ function enforcePlanGuardrails(
           : "Locked rest day per your weekly running availability.",
         literatureCitation: "Stephen Seiler (Polarized 80/20 Model)",
         intensity: "rest",
+        breakdown: undefined,
       };
     }
   }
@@ -530,6 +541,7 @@ function enforcePlanGuardrails(
           hrCap: `≤ ${ctx.lt1Hr} bpm`,
           intensity: "easy",
           literatureCitation: "Stephen Seiler (Polarized 80/20 Model)",
+          breakdown: undefined,
         };
       }
     }
@@ -557,6 +569,7 @@ function enforcePlanGuardrails(
           hrCap: `≤ ${ctx.lt1Hr} bpm`,
           intensity: "easy",
           literatureCitation: "Pete Pfitzinger's Faster Road Racing",
+          breakdown: undefined,
         };
       }
     }
@@ -577,6 +590,7 @@ function enforcePlanGuardrails(
         hrCap: `≤ ${ctx.lt1Hr} bpm`,
         intensity: "easy",
         literatureCitation: "Stephen Seiler (Polarized 80/20 Model)",
+        breakdown: undefined,
       };
     }
   }
@@ -591,6 +605,7 @@ function enforcePlanGuardrails(
           2,
           Math.round(result[i].distanceKm * scale * 10) / 10
         );
+        result[i].breakdown = undefined;
       }
     }
   }
@@ -607,6 +622,14 @@ function enforcePlanGuardrails(
               ? "Stephen Seiler (Polarized 80/20 Model)"
               : "Jack Daniels' Running Formula";
     }
+  }
+
+  // 5. Ensure every day has a valid, distance-consistent WorkoutBreakdown
+  for (let i = 0; i < result.length; i++) {
+    result[i].breakdown =
+      result[i].intensity === "rest"
+        ? buildFallbackWorkoutBreakdown(result[i], ctx.language)
+        : sanitizeOrBuildBreakdown(result[i], ctx.language);
   }
 
   return result;
@@ -678,9 +701,14 @@ GUARDRAILS:
 1. Total weekly distanceKm MUST NOT exceed ${ctx.maxSafeWeeklyKm} km.
 2. ${ctx.deloadTriggered ? "DELOAD ACTIVE: Do NOT schedule any 'hard' Intervals/Tempo sessions. Use Easy/Recovery/Rest only." : "Follow Stephen Seiler's 80/20 polarized model (>=80% below LT1 <= " + ctx.lt1Hr + " bpm). Never stack two 'hard' or 'long' sessions on consecutive days."}
 3. Output ONLY a valid JSON object: { "coachSummary": string, "days": [7 objects Monday..Sunday] }.
-4. Write "coachSummary", "day", "sessionType", and "rationale" in ${langLabel}.
+4. Write "coachSummary", "day", "sessionType", "rationale", and "breakdown" text in ${langLabel}.
 5. Each day object MUST have exact keys:
-   - "day", "sessionType", "distanceKm" (number), "targetPace", "hrCap", "shoe", "rationale", "literatureCitation" (one of: "Jack Daniels' Running Formula", "Stephen Seiler (Polarized 80/20 Model)", "Pete Pfitzinger's Faster Road Racing", "Marius Bakken (Norwegian Sub-LT2 Model)", "Malisoux et al. (2015, Scand. J. Med. Sci. Sports)"), "intensity" ("rest"|"easy"|"moderate"|"hard"|"long").`;
+   - "day", "sessionType", "distanceKm" (number), "targetPace", "hrCap", "shoe", "rationale", "literatureCitation" (one of: "Jack Daniels' Running Formula", "Stephen Seiler (Polarized 80/20 Model)", "Pete Pfitzinger's Faster Road Racing", "Marius Bakken (Norwegian Sub-LT2 Model)", "Malisoux et al. (2015, Scand. J. Med. Sci. Sports)"), "intensity" ("rest"|"easy"|"moderate"|"hard"|"long"), "breakdown".
+6. For non-rest days, "breakdown" MUST be an object:
+   - "objective": string (physiological purpose referencing the card's literatureCitation)
+   - "steps": ordered array of { "type": "warmup"|"main"|"recovery"|"cooldown", "label": string, "distanceOrDuration": string, "targetPace": string, "targetHr": string, "notes": string } whose segment distances sum cleanly to "distanceKm"
+   - "executionTips": array of 2-3 short field tips (shoe choice, pacing, plus hydration/gel guidance if estimated duration > 60 min).
+   For "rest" days, "breakdown" should describe a light recovery/mobility protocol with 1 "recovery" step.`;
 
   const userPrompt = `Generate a personalized 7-day running plan (Monday to Sunday) respecting all physiological guardrails.`;
 
@@ -717,8 +745,8 @@ ADAPTIVE RESCHEDULING RULES:
 1. Days before index ${todayIndexMonday0} (0=Monday..6=Sunday) are in the past — keep them unchanged.
 2. Adapt ONLY today (index ${todayIndexMonday0}) and remaining days based on: "${reason}".
 3. NEVER stack two "hard" or "long" sessions on consecutive days. Total weekly volume MUST stay <= ${ctx.maxSafeWeeklyKm} km (ACWR ${ctx.acwrRatio}).
-4. Output ONLY a valid JSON object: { "coachSummary": string, "days": [7 objects] } with "literatureCitation" on every day.
-5. Write "coachSummary", "day", "sessionType", and "rationale" in ${langLabel}.`;
+4. Output ONLY a valid JSON object: { "coachSummary": string, "days": [7 objects] } with "literatureCitation" and "breakdown" ({ "objective", "steps": [{ "type", "label", "distanceOrDuration", "targetPace", "targetHr", "notes" }], "executionTips" }) on every day.
+5. Write "coachSummary", "day", "sessionType", "rationale", and "breakdown" text in ${langLabel}.`;
 
   const userPrompt = `Constraint: "${reason}" | Today Index: ${todayIndexMonday0}
 Current Plan: ${JSON.stringify(currentDays)}`;
